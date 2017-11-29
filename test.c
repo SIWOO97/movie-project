@@ -14,9 +14,10 @@
 #include<stdlib.h>
 #include<time.h>
 #include<string.h>
+#include<ctype.h>
 
 struct multiple{
-	char data[20];
+	char *data;
 	struct multiple *next;
 };
 
@@ -30,21 +31,31 @@ typedef struct linked_movie{
   struct multiple *actor;
   struct linked_movie *next_movie;
 }LINK_M;
+
 void input_multiple(LINK_M *movie){
 	movie->actor = (struct multiple*)malloc(sizeof(struct multiple));
 	struct multiple *tmp;
 	tmp = movie->actor;
-	char temp;
-	tmp=(struct multiple*)malloc(sizeof(struct multiple));
-	while(1){
-		scanf("%[^,\n]", tmp->data);
-		temp = getchar();
-		if(temp == '\n') break;
+	char *temp;
+	temp=(char*)calloc(1024, sizeof(char));
+	getchar();	
+	scanf("%[^\n]", temp);
+	
+	tmp->data = strtok(temp, ",");
+	
+	while(tmp->data != NULL){
+		char *check;
+		check=(char*)malloc(sizeof(char)*30);
+		check = strtok(NULL, ",");
+		if(check == NULL){
+		       tmp->next=NULL;
+		       break;
+		}
 		else{
-			temp = getchar();
-			tmp -> next = (struct multiple*)malloc(sizeof(struct multiple));
+			tmp->next = (struct multiple*)malloc(sizeof(struct multiple));
 			tmp = tmp->next;
-			tmp -> next = NULL;
+			tmp->next=NULL;
+			tmp->data = check;
 		}
 	}
 }
@@ -53,11 +64,11 @@ void print_multiple_data_log_to_list(FILE *mv_l, LINK_M *movie){
 	struct multiple *tmp;
 	tmp = movie->actor;
 	while(tmp->next != NULL){
-		fprintf(mv_l,"%s\n",tmp->data);
+		fprintf(mv_l,"%s, ",tmp->data);
 		tmp = tmp->next;
 	}
+	fprintf(mv_l, "%s", tmp->data);
 }
-
 void input_movie(LINK_M *movie){
   char input_text;
   int input_num;
@@ -66,18 +77,20 @@ void input_movie(LINK_M *movie){
   fprintf(mv_l,"add:");
   movie=(LINK_M *)malloc(sizeof(LINK_M));
   printf("title >");
-  movie->title=malloc(sizeof(char *)*30);
-  scanf("%s",movie->title);
+  movie->title=(char*)malloc(sizeof(char)*30);
+  scanf("%[^\n]",movie->title);
+  getchar();
   fprintf(mv_l,"%s:",movie->title);
   
   printf("genre >");
-  movie->genre=malloc(sizeof(char *)*30);
-  scanf("%s",movie->genre);
+  movie->genre=(char*)malloc(sizeof(char)*30);
+  scanf("%[^\n]",movie->genre);
+  getchar();
   fprintf(mv_l,"%s:",movie->genre);
   
   printf("director >");
-  movie->director=malloc(sizeof(char *)*30);
-  scanf("%s",movie->director);
+  movie->director=(char*)malloc(sizeof(char)*30);
+  scanf("%[^\n]",movie->director);
   fprintf(mv_l,"%s:",movie->director);
   
   printf("year >");
@@ -94,6 +107,7 @@ void input_movie(LINK_M *movie){
   input_multiple(movie);
   print_multiple_data_log_to_list(mv_l, movie);
   
+  fprintf(mv_l, "\n");
   fclose(mv_l);
 }
 
