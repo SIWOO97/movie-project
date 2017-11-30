@@ -6,11 +6,12 @@ size명령어는 영역의 크기가 얼마나 되는지 보여준다*/
 #include<stdlib.h>
 #include<time.h>
 #include<string.h>
+#include<ctype.h>
 
 typedef struct linked_words{//여러 개의 문자열을 받기 위해 선언한 구조체
-  char *head;//내용을 포인터 배열로 저장함
+  char *data;//내용을 포인터 배열로 저장함
   void *com_word;//같은 문자가 있으면 비교하기 위해서 만들어 놓은 포인터
-  struct linked_words *next_word;//다음 문자열을 노드하기 위해 선언한 자기참조 구조체
+  struct linked_words *next;//다음 문자열을 노드하기 위해 선언한 자기참조 구조체
 }LINK_W;
 
 typedef struct linked_movie{//MOVIE에 해당하는 구조체를 선언함
@@ -75,6 +76,39 @@ void make_director_list(LINK_D **director){
   (*director) -> next_director = (LINK_D *)malloc(sizeof(LINK_D));
   (*director) -> next_director = NULL;
 }
+void input_multiple(LINK_M *movie){
+	movie->actor = (LINK_W *)malloc(sizeof(LINK_W));
+	LINK_W *tmp;
+	tmp = movie->actor;
+	char *temp;
+	temp=(char*)calloc(1024, sizeof(char));
+	scanf("%[^\n]", temp);
+	tmp->data = strtok(temp, ",");
+	while(tmp->data != NULL){
+		char *check;
+		check=(char*)malloc(sizeof(char)*30);
+		check = strtok(NULL, ",");
+		if(check == NULL){
+		       tmp->next=NULL;
+		       break;
+		}
+		else{
+			tmp->next = (LINK_W *)malloc(sizeof(LINK_W));
+			tmp = tmp->next;
+			tmp->next=NULL;
+			tmp->data = check;
+		}
+	}
+}
+void print_multiple_data_log_to_list(FILE *mv_l, LINK_M *movie){
+	LINK_W *tmp;
+	tmp = movie->actor;
+	while(tmp->next != NULL){
+		fprintf(mv_l,"%s,",tmp->data);
+		tmp = tmp->next;
+	}
+	fprintf(mv_l, "%s\n", tmp->data);
+}
 void add_movie(LINK_M *movie){
   FILE *mv_l,*mv_s;
   LINK_W *save_word,*last_word;
@@ -125,8 +159,11 @@ void add_movie(LINK_M *movie){
   printf("time >");
   scanf("%d%*c",&input_num);
   save_movie -> time = input_num;
-  fprintf(mv_l,"%3d\n",save_movie -> time);
+  fprintf(mv_l,"%3d:",save_movie -> time);
   new_movie = movie;
+  printf("actor >");
+  input_multiple(movie);
+  print_multiple_data_log_to_list(mv_l,movie);
   while(new_movie -> next_movie != NULL)
   new_movie = new_movie -> next_movie;
   new_movie -> next_movie = save_movie;
@@ -247,11 +284,14 @@ int delete_movie(LINK_M *movie,int serial){
 }
 int add_movie_list(LINK_M *movie,FILE *mv_l){
   LINK_M *new_movie,*link_movie;
+  LINK_W *tmp;
   char *read_data,read_text;
   int read_num;
   link_movie = (LINK_M *)malloc(sizeof(LINK_M));
   new_movie = (LINK_M *)malloc(sizeof(LINK_M));
-  read_data = (char *)malloc(sizeof(char)*100);
+  read_data = (char *)malloc(sizeof(char)*1000);
+  new_movie -> actor = (LINK_W *)malloc(sizeof(LINK_W));
+  tmp = new_movie ->actor;
   fscanf(mv_l,"%*c%d",&read_num);
   new_movie -> serial_num = read_num;
   fscanf(mv_l,"%*c%[^:]s",read_data);
@@ -267,6 +307,23 @@ int add_movie_list(LINK_M *movie,FILE *mv_l){
   new_movie -> year = read_num;
   fscanf(mv_l,"%*c%d\n",&read_num);
   new_movie -> time = read_num;
+  fscanf(mv_l,"%[^\n]\n",read_data);
+  tmp->data = strtok(read_data, ",");
+	while(tmp->data != NULL){
+		char *check;
+		check=(char*)malloc(sizeof(char)*30);
+		check = strtok(NULL, ",");
+		if(check == NULL){
+		       tmp->next=NULL;
+		       break;
+		}
+		else{
+			tmp->next = (LINK_W *)malloc(sizeof(LINK_W));
+			tmp = tmp->next;
+			tmp->next=NULL;
+			tmp->data = check;
+		}
+	}
   link_movie = movie;
   while(link_movie -> next_movie != NULL)
   link_movie = link_movie -> next_movie;
@@ -349,17 +406,26 @@ void scan_movie_log(LINK_M *movie){
 
 int print_movie_list(LINK_M *movie,int serial){
   LINK_M *print_movie;
+  LINK_W *print_word;
   print_movie=(LINK_M*)malloc(sizeof(LINK_M));
   print_movie=movie;
   while(print_movie -> next_movie != NULL){
     print_movie = print_movie -> next_movie;
     if(print_movie -> serial_num == serial){
     printf("serial:%d\ntitle:%s\n:genre:%s\n:director:%s\n:year:%d\n:time:%d\n",print_movie -> serial_num,print_movie -> title,print_movie -> genre,print_movie -> director,print_movie -> year,print_movie -> time);
+    print_word = print_movie -> actor;
+    while(print_word -> next != NULL){
+  		printf("actor:%s,",print_word->data);
+  		print_word = print_word->next;
+  	}
+  	printf("%s\n", print_word->data);
+    
     return 1;
     break;
   }
 }
 }
+
 void commands(LINK_D *director,LINK_A *actor,LINK_M *movie){
   //명령어를 입력받아서 그에 해당하는 함수를 출력하기 위해 선언한 변수
   //serach print add update delete sort save end
