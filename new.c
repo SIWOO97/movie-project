@@ -19,11 +19,16 @@ typedef struct linked_words{//여러 개의 문자열을 받기 위해 선언한
   struct linked_words *next;//다음 문자열을 노드하기 위해 선언한 자기참조 구조체
 }LINK_W;
 
+typedef struct compare{
+  char *data;
+  void *com_word;
+}DIR;
+
 typedef struct linked_movie{//MOVIE에 해당하는 구조체를 선언함
   int serial_num;
   char *title;
   char *genre;
-  char *director;
+  DIR *director;
   int year;
   int time;
   LINK_W *actor;//actor는 1명이 아니기 때문에 또 다른 구조체를 사용해서 여려 개를 저장하려함
@@ -80,7 +85,7 @@ void make_movie_list_file(LINK_M *save_movie,int serial){//이거 왜 3번도는
   print_word = (LINK_W *)malloc(sizeof(LINK_W));
     while(i<serial-1){
     save_movie = save_movie -> next_movie;
-    fprintf(mv_list,"%d:%s:%s:%s:%d:%d:",save_movie -> serial_num,save_movie -> title,save_movie -> genre,save_movie -> director,save_movie -> year,save_movie -> time);
+    fprintf(mv_list,"%d:%s:%s:%s:%d:%d:",save_movie -> serial_num,save_movie -> title,save_movie -> genre,save_movie -> director -> data,save_movie -> year,save_movie -> time);
     print_word = save_movie -> actor;
     while(print_word -> next != NULL){
   		fprintf(mv_list,"%s,",print_word->data);
@@ -167,10 +172,11 @@ void add_movie(LINK_M *movie){
   strcpy(save_movie -> genre, input_data);
   fprintf(mv_l,"%s:",save_movie ->genre);
   printf("director >");
+  save_movie -> director = (DIR *)malloc(sizeof(DIR));
   scanf("%[^\n]%*c",input_data);
-  save_movie -> director = (char *)malloc(strlen(input_data)+1);
-  strcpy(save_movie -> director, input_data);
-  fprintf(mv_l,"%s:",save_movie -> director);
+  save_movie -> director -> data = (char *)malloc(strlen(input_data)+1);
+  strcpy(save_movie -> director -> data, input_data);
+  fprintf(mv_l,"%s:",save_movie -> director -> data);
   printf("year >");
   scanf("%d",&input_num);
   save_movie -> year = input_num;
@@ -230,8 +236,9 @@ int add_movie_list(LINK_M *movie,FILE *mv_l){
   new_movie -> genre = (char *)malloc(strlen(read_data));
   strcpy(new_movie -> genre, read_data);
   fscanf(mv_l,"%*c%[^:]s",read_data);
-  new_movie -> director = (char *)malloc(strlen(read_data));
-  strcpy(new_movie -> director, read_data);
+  new_movie -> director = (DIR *)malloc(sizeof(DIR));
+  new_movie -> director -> data = (char *)malloc(strlen(read_data));
+  strcpy(new_movie -> director -> data, read_data);
   fscanf(mv_l,"%*c%d",&read_num);
   new_movie -> year = read_num;
   fscanf(mv_l,"%*c%d:",&read_num);
@@ -261,41 +268,6 @@ int add_movie_list(LINK_M *movie,FILE *mv_l){
   free(read_data);
   if(read_text=='\n')
   return 1;
-}
-void update_movie_list(LINK_M *movie,FILE *mv_l,int serial){
-  int read_num;
-  char read_text,*read_data;
-  read_data = (char *)malloc(sizeof(char)*100);
-  fscanf(mv_l,":%d:",&read_num);
-  serial = read_num;
-  while(movie -> next_movie != NULL){
-    movie = movie -> next_movie;
-    if(movie -> serial_num == read_num){//title,genre,director,year,time,actor
-      fscanf(mv_l,"%s:",read_data);
-      if(*read_data != '='){
-        movie -> title = malloc(strlen(read_data));
-        movie -> title = read_data;
-      }
-      fscanf(mv_l,"%s:",read_data);
-      if(*read_data != '='){
-        movie -> genre = malloc(strlen(read_data));
-        movie -> genre = read_data;
-      }
-      fscanf(mv_l,"%s:",read_data);
-      if(*read_data != '='){
-        movie -> director = malloc(strlen(read_data));
-        movie -> director = read_data;
-      }
-      fscanf(mv_l,"%c:",&read_text);
-      if(read_text != '=')
-      movie -> year = read_text - 48;
-     fscanf(mv_l,"%c\n",&read_text);
-     if(read_text != '=')
-     movie -> time = read_text - 48;
-     free(read_data);
-     break;
-  }
-}
 }
 int delete_movie_list(LINK_M *movie,FILE *mv_l){
   LINK_M *pre_movie, *del_movie;
@@ -339,7 +311,6 @@ int scan_movie_log(LINK_M *movie){
     break;
   }
   else if(strcmp(input_data,"update")==0){
-    update_movie_list(movie,mv_l,serial);
     read_text=fgetc(mv_l);
     fseek(mv_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -368,7 +339,7 @@ int print_movie_list(LINK_M *movie,int serial){
   while(print_movie -> next_movie != NULL){
     print_movie = print_movie -> next_movie;
     if(print_movie -> serial_num == serial){
-    printf("  %d, %s, %s\n  D: %s\n",print_movie -> serial_num,print_movie -> title,print_movie -> genre,print_movie -> director);
+    printf("  %d, %s, %s\n  D: %s\n",print_movie -> serial_num,print_movie -> title,print_movie -> genre,print_movie -> director -> data);
     print_word = print_movie -> actor;
     while(print_word -> next != NULL){
   		printf("  A%d : %s\n",i,print_word->data);
