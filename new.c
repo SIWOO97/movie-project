@@ -86,7 +86,7 @@ void compare_actor_word(ALL_M *movie,ALL_A *actor);
 void compare_director_word(ALL_M *movie,ALL_D *director);
 int compare(const void *, const void *);
 int compare_num(const void *, const void *);
-
+void compare_movie(ALL_M *movie,ALL_A *actor);
 int compare(const void *a, const void *b){
   return(strcmp(*(char**)a,*(char**)b));
 }
@@ -1281,11 +1281,12 @@ int copy_movie_list(){
     free(filename);
     }
     void compare_movie_word(ALL_M *movie,ALL_D *director,ALL_A *actor){
-      LINK_M *com_movie;
+      LINK_M *com_movie,*link_movie;
       LINK_A *com_actor,*link_actor;
       LINK_D *com_director,*link_director;
       LINK_W *com_word,*last_word,*last;
       com_movie = movie -> head;
+      link_movie = movie -> head;
       com_actor = actor -> head;
       com_director = director -> head;
       link_director = director -> head;
@@ -1305,25 +1306,26 @@ int copy_movie_list(){
       while(com_movie -> next_movie != movie -> tail){
         com_movie = com_movie -> next_movie;
         com_word = com_movie -> actor;
-        last = com_movie -> actor;
         while(com_actor -> next_actor != actor -> tail){
           com_actor = com_actor -> next_actor;
-          if(strcmp(last -> data,com_actor -> name)==0){
-            last -> com_word = com_actor;
+          if(strcmp(com_word -> data,com_actor -> name)==0){
+            com_word -> com_word = com_actor;
           }
         }
-        com_actor = actor -> head;
-        while(com_word -> next != NULL){
+                  com_actor = actor -> head;
+              while(com_word -> next != NULL){
           last_word = com_word -> next;
+          com_actor = actor -> head;
           while(com_actor -> next_actor != actor -> tail){
             com_actor = com_actor -> next_actor;
+            last = com_word -> next;
             if(strcmp(com_word -> data,com_actor -> name)==0){
               com_word -> com_word = com_actor;
             }
-            else if(strcmp(last_word -> data,com_actor -> name)==0)
-            last_word -> com_word = com_actor;
+            else if(strcmp(last -> data,com_actor -> name)==0){
+              last -> com_word = com_actor;
+            }
           }
-          com_actor = actor -> head;
           com_word = com_word -> next;
         }
       }
@@ -1337,11 +1339,10 @@ int copy_movie_list(){
       while(com_actor -> next_actor != actor -> tail){
         com_actor = com_actor -> next_actor;
         com_word = com_actor -> title;
-        last = com_actor -> title;
         while(com_movie -> next_movie != movie -> tail){
           com_movie = com_movie -> next_movie;
-          if(strcmp(last -> data,com_movie -> title)==0){
-            last -> com_word = com_movie;
+          if(strcmp(com_word -> data,com_movie -> title)==0){
+            com_word -> com_word = com_movie;
           }
         }
         com_movie = movie -> head;
@@ -1352,8 +1353,9 @@ int copy_movie_list(){
             if(strcmp(com_word -> data,com_movie -> title)==0){
               com_word -> com_word = com_movie;
             }
-            else if(strcmp(last_word -> data,com_actor -> name)==0)
-            last_word -> com_word = com_actor;
+            else if(strcmp(last_word -> data,com_movie -> title)==0){
+              last_word -> com_word = com_movie;
+            }
           }
           com_movie = movie -> head;
           com_word = com_word -> next;
@@ -1369,19 +1371,22 @@ int copy_movie_list(){
       while(com_director -> next_director != director -> tail){
         com_director = com_director -> next_director;
         com_word = com_director -> title;
-        last = com_director -> title;
         while(com_movie -> next_movie != movie -> tail){
           com_movie = com_movie -> next_movie;
-          if(strcmp(last -> data,com_movie -> title)==0){
-            last -> com_word = com_movie;
+          if(strcmp(com_word -> data,com_movie -> title)==0){
+            com_word -> com_word = com_movie;
           }
         }
         com_movie = movie -> head;
         while(com_word -> next != NULL){
+          last = com_word -> next;
           while(com_movie -> next_movie != movie -> tail){
             com_movie = com_movie -> next_movie;
             if(strcmp(com_word -> data,com_movie -> title)==0){
               com_word -> com_word = com_movie;
+            }
+            else if(strcmp(last -> data,com_movie -> title)==0){
+              last -> com_word = com_movie;
             }
           }
           com_movie = movie -> head;
