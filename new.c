@@ -72,6 +72,7 @@ typedef struct add_director{
   int size;
 }ALL_D;
 
+
 void cntrl_c(int sig);
 void make_movie_list(LINK_M **movie);
 void make_actor_list(LINK_A **actor);
@@ -83,7 +84,20 @@ int copy_actor_list();
 void compare_movie_word(ALL_M *movie,ALL_D *director,ALL_A *actor);
 void compare_actor_word(ALL_M *movie,ALL_A *actor);
 void compare_director_word(ALL_M *movie,ALL_D *director);
+int compare(const void *, const void *);
+int compare_num(const void *, const void *);
 
+int compare(const void *a, const void *b){
+  return(strcmp(*(char**)a,*(char**)b));
+}
+int compare_num(const void *a, const void *b){
+  if(*(int *)a > *(int *)b)
+  return 1;
+  else if(*(int *)a == *(int *)b)
+  return 0;
+  else
+  return -1;
+}
 void make_movie_admin(ALL_M **movie){
   *movie = (ALL_M *)malloc(sizeof(ALL_M));
   (*movie) -> head = (LINK_M *)malloc(sizeof(LINK_M));
@@ -143,9 +157,9 @@ void make_movie_list_file(ALL_M *movie){//이거 왜 3번도는지 모르겠음.
   fclose(mv_list);
   }
 void input_multiple(LINK_M *movie){
-	movie->actor = (LINK_W *)malloc(sizeof(LINK_W));
+	movie -> actor = (LINK_W *)malloc(sizeof(LINK_W));
 	LINK_W *tmp;
-	tmp = movie->actor;
+	tmp = movie -> actor;
 	char *temp;
 	temp=(char*)calloc(1024, sizeof(char));
 	scanf("%[^\n]%*c", temp);
@@ -168,7 +182,7 @@ void input_multiple(LINK_M *movie){
 }
 void print_multiple_data_log_to_list(FILE *mv_l, LINK_M *movie){
 	LINK_W *tmp;
-	tmp = movie->actor;
+	tmp = movie -> actor;
 	while(tmp->next != NULL){
 		fprintf(mv_l,"%s,",tmp->data);
 		tmp = tmp->next;
@@ -380,16 +394,26 @@ int print_movie_list(ALL_M *movie,int serial){
     if(print_movie -> serial_num == serial){
       print_director = (LINK_D*)print_movie -> director -> com_word;
     printf("  %d, %s, %s\n",print_movie -> serial_num,print_movie -> title,print_movie -> genre);
-    printf(" D: %s\n",print_movie -> director -> data);
+    if(print_movie -> director -> com_word == NULL)
+    printf(" D: %s (  -  )\n",print_movie -> director -> data);
+    else{
+      printf(" D: %s (%d)\n",print_movie -> director -> data,print_director -> birth);
+    }
     print_word = print_movie -> actor;
     while(print_word -> next != NULL){
       print_actor = (LINK_A *)print_word -> com_word;
-  		printf("  A%d : %s\n",i,print_word->data);
+      if(print_word -> com_word == NULL)
+  		printf("  A%d : %s (  -  )\n",i,print_word->data);
+      else
+      printf("  A%d : %s (%d)\n",i,print_word->data,print_actor -> birth );
   		print_word = print_word->next;
       i++;
   	}
-    print_actor = print_word -> com_word;
-  	printf("  A%d : %s\n",i,print_word->data);
+    print_actor = (LINK_A *)print_word -> com_word;
+    if(print_word -> com_word == NULL)
+    printf("  A%d : %s (  -  )\n",i,print_word->data);
+    else
+    printf("  A%d : %s (%d)\n",i,print_word->data,print_actor -> birth);
     return 1;
   }
 }
@@ -609,10 +633,10 @@ int scan_actor_log(ALL_A *actor){
 }
 return i;
 }
-
 int print_actor_list(ALL_A *actor,int serial){
   LINK_A *print_actor;
   LINK_W *print_word;
+  LINK_M *print_movie;
   int i=1;
   print_actor=(LINK_A*)malloc(sizeof(LINK_A));
   print_actor=actor -> head;
@@ -623,11 +647,19 @@ int print_actor_list(ALL_A *actor,int serial){
     printf("  %d, %s, %c,  %8d\n",print_actor -> serial_num,print_actor -> name,print_actor -> sex,print_actor -> birth);
     print_word = print_actor -> title;
     while(print_word -> next != NULL){
-  		printf("  M%d : %s\n",i,print_word->data);
+      print_movie = (LINK_M *)print_word -> com_word;
+      if(print_movie == NULL)
+  		printf("  M%d : %s(  -  )\n",i,print_word->data);
+      else
+      printf("  M%d : %s(%d,%d)\n",i,print_word->data,print_movie -> year,print_movie -> time);
   		print_word = print_word->next;
       i++;
   	}
-  	printf("  M%d : %s\n",i,print_word->data);
+    print_movie = (LINK_M *)print_word -> com_word;
+    if(print_movie == NULL)
+    printf("  M%d : %s(  -  )\n",i,print_word->data);
+    else
+    printf("  M%d : %s(%d,%d)\n",i,print_word->data,print_movie -> year,print_movie -> time);
     return 1;
   }
 }
@@ -846,10 +878,10 @@ int scan_director_log(ALL_D *director){
 }
 return i;
 }
-
 int print_director_list(ALL_D *director,int serial){
   LINK_D *print_director;
   LINK_W *print_word;
+  LINK_M *print_movie;
   int i=1;
   print_director=(LINK_D*)malloc(sizeof(LINK_D));
   print_director=director -> head;
@@ -860,21 +892,217 @@ int print_director_list(ALL_D *director,int serial){
     printf("  %d, %s, %c,  %8d\n",print_director -> serial_num,print_director -> name,print_director -> sex,print_director -> birth);
     print_word = print_director -> title;
     while(print_word -> next != NULL){
-  		printf("  M%d : %s\n",i,print_word->data);
+      print_movie = (LINK_M *)print_word -> com_word;
+      if(print_movie == NULL)
+  		printf("  M%d : %s(  -  )\n",i,print_word->data);
+      else
+      printf("  M%d : %s(%d,%d)\n",i,print_word->data,print_movie -> year,print_movie -> time);
   		print_word = print_word->next;
       i++;
   	}
-  	printf("  M%d : %s\n",i,print_word->data);
+    print_movie = (LINK_M *)print_word -> com_word;
+    if(print_movie == NULL)
+    printf("  M%d : %s(  -  )\n",i,print_word->data);
+    else
+    printf("  M%d : %s(%d,%d)\n",i,print_word->data,print_movie -> year,print_movie -> time);
     return 1;
   }
 }
 }
+void sorting(ALL_M *movie, ALL_A *actor,ALL_D *director,char tag,char option){
+  char **copy,**copy_word;
+  int *copy_num;
+  int i,check,k,ch;
+  LINK_M *save_movie,*print_movie;
+  LINK_A *save_actor;
+  LINK_D *save_director;
+  LINK_W *print_word;
+  save_movie = movie -> head;
+  save_actor = actor -> head;
+  save_director = director -> head;
+  copy = (char **)calloc(1024,sizeof(char *));
+  copy_word = (char **)calloc(1024,sizeof(char *));
+  if(tag == 'm'){
+    if(option == 't'){
+      while(save_movie -> next_movie != movie -> tail){
+        save_movie = save_movie -> next_movie;
+        *(copy+i) = calloc(1024,sizeof(char));
+        strcpy(*(copy+i),save_movie -> title);
+        printf("%s\n",*(copy+i));
+        i++;
+      }
+      //qsort(*copy,i,sizeof(copy),compare);
+      while(check != i){
+        print_movie = movie -> head;
+        while(print_movie -> next_movie != movie -> tail){
+          print_movie = print_movie -> next_movie;
+          if(strcmp(*(copy+check),print_movie -> title) == 0){
+          printf("%s:%s:%s:",print_movie -> title, print_movie -> genre, print_movie -> director -> data);
+          printf("%d:%d:",print_movie -> year, print_movie -> time);
+          print_word = print_movie -> actor;
+          while(print_word -> next != NULL){
+            printf("%s,",print_word->data);
+            print_word = print_word->next;
+          }
+          printf("%s\n", print_word->data);
+          check++;
+          break;
+          }
+        }
+      }
+      free(copy);
 
+    }
+    else if(option == 'g'){
+      while(save_movie -> next_movie != movie -> tail){
+        save_movie = save_movie -> next_movie;
+        *(copy+i) = calloc(1024,sizeof(char));
+        strcpy(*(copy+i),save_movie -> genre);
+        i++;
+      }
+      qsort(*copy,movie->size,sizeof(char),compare);
+      while(check < movie -> size){
+        save_movie = movie -> head;
+        while(save_movie -> next_movie != movie -> tail){
+          save_movie = save_movie -> next_movie;
+          if(strcmp(*(copy+check),save_movie -> genre) == 0){
+          printf("%s:%s:%s:",save_movie -> title, save_movie -> genre, save_movie -> director -> data);
+          printf("%d:%d:",save_movie -> year, save_movie -> time);
+          print_word = save_movie -> actor;
+          while(print_word -> next != NULL){
+            printf("%s,",print_word->data);
+            print_word = print_word->next;
+          }
+          printf("%s\n", print_word->data);
+          check++;
+          break;
+          }
+        }
+      }
+      free(copy);
+    }
+    else if(option == 'd'){
+      while(save_movie -> next_movie != movie -> tail){
+        save_movie = save_movie -> next_movie;
+        *(copy+i) = calloc(1024,sizeof(char));
+        strcpy(*(copy+i),save_movie -> director -> data);
+        i++;
+      }
+      qsort(*copy,movie->size,sizeof(char),compare);
+      while(check < movie -> size){
+        save_movie = movie -> head;
+        while(save_movie -> next_movie != movie -> tail){
+          save_movie = save_movie -> next_movie;
+          if(strcmp(*(copy+check),save_movie -> director -> data) == 0){
+          printf("%s:%s:%s:",save_movie -> title, save_movie -> genre, save_movie -> director -> data);
+          printf("%d:%d:",save_movie -> year, save_movie -> time);
+          print_word = save_movie -> actor;
+          while(print_word -> next != NULL){
+            printf("%s,",print_word->data);
+            print_word = print_word->next;
+          }
+          printf("%s\n", print_word->data);
+          check++;
+          break;
+          }
+        }
+      }
+      free(copy);
+    }
+    else if(option == 'y'){
+      while(save_movie -> next_movie != movie -> tail){
+        save_movie = save_movie -> next_movie;
+        copy_num = (int *)calloc(1024,sizeof(int));
+        *(copy_num+i) = save_movie -> year;
+        printf("%d   ",save_movie -> year);
+        printf("%d\n",*(copy_num+i));
+        i++;
+       }
+       qsort(copy_num,i,sizeof(int),compare_num);
+       for(int j=0;j<i;j++){
+         printf("%d\n",*(copy_num+j));
+       }
+       while(check > movie -> size){
+         save_movie = movie -> head;
+         while(save_movie -> next_movie != movie -> tail){
+           save_movie = save_movie -> next_movie;
+           if(*(copy_num+check)==save_movie -> year){
+             printf("%s:%s:%s:",save_movie -> title, save_movie -> genre, save_movie -> director -> data);
+             printf("%d:%d\n",save_movie -> year, save_movie -> time);
+             check++;
+             break;
+           }
+         }
+       }
+    }
+    else if(option == 'r'){
+      while(save_movie -> next_movie != movie -> tail){
+        save_movie = save_movie -> next_movie;
+        copy_num = (int *)calloc(1024,sizeof(int));
+        *(copy_num+i) = save_movie -> time;
+        i++;
+      }
+       qsort(copy_num,movie -> size , sizeof(int),compare_num);
+       while(check < movie -> size){
+         save_movie = movie -> head;
+         while(save_movie -> next_movie != movie -> tail){
+           save_movie = save_movie -> next_movie;
+           if(save_movie -> time == *(copy_num+check)){
+             //출력
+             check++;
+             break;
+           }
+         }
+       }
+    }
+    else if(option == 'a'){//qsort 두 번 사용함
+      //먼저 각각의 링크드 리스트 안에 있는 액터들을 qsort해주고
+      //그 다음에 맨 앞 글자들 끼리 qsort해주면서 출력해야 됨
+      while(save_movie -> next_movie != movie -> tail){
+        save_movie = save_movie -> next_movie;
+        *(copy+i) = calloc(1024,sizeof(char));
+        strcpy(*(copy+i),save_movie -> actor -> data);
+        i++;
+      }
+      qsort(*copy,movie->size,sizeof(char),compare);
+      while(check < movie -> size){
+        save_movie = movie -> head;
+        while(save_movie -> next_movie != movie -> tail){
+          save_movie = save_movie -> next_movie;
+          if(strcmp(*(copy+check),save_movie -> actor -> data)==0){
+            //actor내용 전 까지 출력
+            print_word = save_movie -> actor;
+            while(print_word -> next != NULL){
+              *(copy+ch) = calloc(1024,sizeof(char));
+              strcpy(*(copy+ch),print_word -> data);
+              print_word = print_word -> next;
+              ch++;
+            }
+            *(copy+ch) = calloc(1024,sizeof(char));
+            strcpy(*(copy+ch),print_word -> data);
+            print_word = print_word -> next;
+            qsort(*copy_word,ch,sizeof(char),compare);
+            for(k=0;k<ch;k++){
+              printf("%s,",*(copy+k));
+            }
+            printf("%s,",*(copy+k));
+          }
+        }
+      }
+    }
+  }
+  else if(tag == 'd'){
+
+  }
+  else if(tag == 'a'){
+
+  }
+}
 void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   //명령어를 입력받아서 그에 해당하는 함수를 출력하기 위해 선언한 변수
   //serach print add update delete sort save end
   char *command,*input_data;//문자열을 입력받을 char형 포인터 배열을 선언하였음
-  char input_text;//옵션을 받을 char형 변수를 선언함
+  char input_text,option;//옵션을 받을 char형 변수를 선언함
   int input_num,i;
   scan_movie_log(movie);
   scan_actor_log(actor);
@@ -936,7 +1164,10 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   }
 }
   else if(strcmp(command,"sort")==0){//파일의 내용을 정렬하여서 출력함
-
+    scanf("%*c%c",&input_text);
+    scanf("%*c%c",&option);
+    sorting(movie,actor,director,input_text,option);
+    getchar();
   }
   else if(strcmp(command,"print")==0){//파일의 내용을 출력함
     scanf("%*c%c%*c",&input_text);
@@ -977,7 +1208,7 @@ void cntrl_c(int sig){//신호를 받아서 ctrl + C 를 통해 끄려고 할 �
   char *answer; //나중에 포인터로 바꾸기
   answer=(char *)calloc(100,sizeof(char));
   printf("\n프로그램을 종료하시겠습니까? (y/n)");
-  scanf("%s", answer);
+  scanf("%[^\n]%*c", answer);
   if(*answer =='y' || *answer == 'Y')
     exit(1);
   }
@@ -1051,66 +1282,110 @@ int copy_movie_list(){
     }
     void compare_movie_word(ALL_M *movie,ALL_D *director,ALL_A *actor){
       LINK_M *com_movie;
-      LINK_A *com_actor;
-      LINK_D *com_director;
-      LINK_W *com_word;
+      LINK_A *com_actor,*link_actor;
+      LINK_D *com_director,*link_director;
+      LINK_W *com_word,*last_word,*last;
       com_movie = movie -> head;
       com_actor = actor -> head;
       com_director = director -> head;
-      while(com_movie -> next_movie != movie -> tail){
+      link_director = director -> head;
+      link_actor = actor -> head;
+      while(com_movie -> next_movie != movie -> tail){//무비 구조체 확인
         com_movie = com_movie -> next_movie;
-        while(com_director -> next_director != director -> tail){
+        while(com_director -> next_director != director -> tail){//디렉터를 끝까지 보내
           com_director = com_director -> next_director;
           if(strcmp(com_movie -> director -> data,com_director -> name)==0){
             //무비의 영화 감독과 감독의 이름이 같을 때
             com_movie -> director -> com_word = com_director;
           }
         }
+        com_director = link_director;
+      }
+      com_movie = movie -> head;
+      while(com_movie -> next_movie != movie -> tail){
+        com_movie = com_movie -> next_movie;
+        com_word = com_movie -> actor;
+        last = com_movie -> actor;
+        while(com_actor -> next_actor != actor -> tail){
+          com_actor = com_actor -> next_actor;
+          if(strcmp(last -> data,com_actor -> name)==0){
+            last -> com_word = com_actor;
+          }
+        }
+        com_actor = actor -> head;
+        while(com_word -> next != NULL){
+          last_word = com_word -> next;
           while(com_actor -> next_actor != actor -> tail){
             com_actor = com_actor -> next_actor;
-            while(com_movie -> actor -> next != NULL){
-              if(strcmp(com_actor -> name, com_movie -> actor -> data)==0){
-                //무비의 배우 이름과 배우의 이름이 같을 때
-                com_movie -> actor -> com_word = com_actor;
-              }
-              com_movie -> actor = com_movie -> actor -> next;
+            if(strcmp(com_word -> data,com_actor -> name)==0){
+              com_word -> com_word = com_actor;
             }
+            else if(strcmp(last_word -> data,com_actor -> name)==0)
+            last_word -> com_word = com_actor;
           }
+          com_actor = actor -> head;
+          com_word = com_word -> next;
+        }
       }
     }
     void compare_actor_word(ALL_M *movie,ALL_A *actor){
       LINK_M *com_movie;
       LINK_A *com_actor;
+      LINK_W *com_word,*last_word,*last;
       com_movie = movie -> head;
       com_actor = actor -> head;
       while(com_actor -> next_actor != actor -> tail){
         com_actor = com_actor -> next_actor;
+        com_word = com_actor -> title;
+        last = com_actor -> title;
         while(com_movie -> next_movie != movie -> tail){
           com_movie = com_movie -> next_movie;
-          while(com_actor -> title -> next != NULL){
-            if(strcmp(com_actor -> title -> data,com_movie -> title)==0){
-              com_actor -> title -> com_word = com_movie;
-            }
-            com_actor -> title = com_actor -> title -> next;
+          if(strcmp(last -> data,com_movie -> title)==0){
+            last -> com_word = com_movie;
           }
         }
+        com_movie = movie -> head;
+        while(com_word -> next != NULL){
+          last_word = com_word -> next;
+          while(com_movie -> next_movie != movie -> tail){
+            com_movie = com_movie -> next_movie;
+            if(strcmp(com_word -> data,com_movie -> title)==0){
+              com_word -> com_word = com_movie;
+            }
+            else if(strcmp(last_word -> data,com_actor -> name)==0)
+            last_word -> com_word = com_actor;
+          }
+          com_movie = movie -> head;
+          com_word = com_word -> next;
+        }
       }
-    }
+      }
     void compare_director_word(ALL_M *movie,ALL_D *director){
       LINK_M *com_movie;
       LINK_D *com_director;
+      LINK_W *com_word,*last;
       com_movie = movie -> head;
       com_director = director -> head;
       while(com_director -> next_director != director -> tail){
         com_director = com_director -> next_director;
+        com_word = com_director -> title;
+        last = com_director -> title;
         while(com_movie -> next_movie != movie -> tail){
           com_movie = com_movie -> next_movie;
-          while(com_director -> title -> next != NULL){
-            if(strcmp(com_director -> title -> data,com_movie -> title)==0){
-              com_director -> title -> com_word = com_movie;
-            }
-            com_director -> title = com_director -> title -> next;
+          if(strcmp(last -> data,com_movie -> title)==0){
+            last -> com_word = com_movie;
           }
+        }
+        com_movie = movie -> head;
+        while(com_word -> next != NULL){
+          while(com_movie -> next_movie != movie -> tail){
+            com_movie = com_movie -> next_movie;
+            if(strcmp(com_word -> data,com_movie -> title)==0){
+              com_word -> com_word = com_movie;
+            }
+          }
+          com_movie = movie -> head;
+          com_word = com_word -> next;
         }
       }
     }
