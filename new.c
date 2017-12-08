@@ -100,8 +100,8 @@ int compare_num(const void *a, const void *b){
 }
 void make_movie_admin(ALL_M **movie){
   *movie = (ALL_M *)malloc(sizeof(ALL_M));
-  (*movie) -> head = (LINK_M *)malloc(sizeof(LINK_M));
-  (*movie) -> tail = (LINK_M *)malloc(sizeof(LINK_M));
+  (*movie) -> head = (LINK_M *)calloc(1,sizeof(LINK_M));
+  (*movie) -> tail = (LINK_M *)calloc(1,sizeof(LINK_M));
   (*movie) -> head -> next_movie = (*movie) -> tail;
   (*movie) -> tail -> next_movie = (*movie) -> tail;
 }
@@ -162,7 +162,8 @@ void input_multiple(LINK_M *movie){
 	tmp = movie -> actor;
 	char *temp;
 	temp=(char*)calloc(1024, sizeof(char));
-	scanf("%[^\n]%*c", temp);
+	scanf("%[^\n]", temp);
+  getchar();
 	tmp->data = strtok(temp, ",");
 	while(tmp->data != NULL){
 		char *check;
@@ -248,10 +249,8 @@ void add_movie(ALL_M *movie){
   printf("actor >");
   input_multiple(save_movie);
   print_multiple_data_log_to_list(mv_l,save_movie);
-  while(1){
+  while(new_movie -> next_movie != movie -> tail){
   new_movie = new_movie -> next_movie;
-  if(new_movie -> next_movie == movie -> tail)
-  break;
 }
   new_movie -> next_movie = save_movie;
   save_movie -> next_movie = movie -> tail;
@@ -356,7 +355,7 @@ int scan_movie_log(ALL_M *movie){
   mv_l=fopen("movie_log","r");
   save_movie=(LINK_M *)malloc(sizeof(LINK_M));
   input_data=(char *)malloc(sizeof(char)*30);
-  while(!feof(mv_l)){
+  while(1){
     if(mv_l == NULL){
       return 1;
       break;
@@ -364,6 +363,10 @@ int scan_movie_log(ALL_M *movie){
   fscanf(mv_l,"%[^:]s",input_data);
   if(strcmp(input_data,"add")==0){
     add_movie_list(movie,mv_l);
+    read_text=fgetc(mv_l);
+    fseek(mv_l,-1,SEEK_CUR);
+    if(read_text==EOF)
+    break;
   }
   else if(strcmp(input_data,"update")==0){
     read_text=fgetc(mv_l);
@@ -373,6 +376,10 @@ int scan_movie_log(ALL_M *movie){
   }
   else if(strcmp(input_data,"delete")==0){
     delete_movie_list(movie,mv_l);
+    read_text=fgetc(mv_l);
+    fseek(mv_l,-1,SEEK_CUR);
+    if(read_text==EOF)
+    break;
   }
   else
   break;
