@@ -163,7 +163,7 @@ void input_multiple(LINK_M *movie){
 	char *temp;
 	temp=(char*)calloc(1024, sizeof(char));
 	scanf("%[^\n]", temp);
-  getchar();
+	getchar();
 	tmp->data = strtok(temp, ",");
 	while(tmp->data != NULL){
 		char *check;
@@ -428,36 +428,36 @@ void update_movie(ALL_M *movie, char *option, int serial){
         if(*(check_option+5) == 'a'){
 	       printf("actor > ");
 	       
-	       LINK_M *ttmp;
+	       LINK_M *ttmp = (LINK_M*)malloc(sizeof(LINK_M));
 	       input_multiple(ttmp);
 
 	       int a=1, b=1;
 	       LINK_W *new;
 	       new = ttmp->actor;
+
 	       while(new ->next != NULL){
 		       a++;
 		      new = new->next;
 	       }
+	       new = ttmp->actor;
 	       LINK_W *org;
 	       org = update->actor;
 	       while(org->next != NULL){
 		       b++;
 		      org = org->next;
 	       }
+	       org = update->actor;
 	       if(a != b){
-		       LINK_W *new1 = ttmp->actor;
-		       while(new1->next != NULL){
-			       strcat(input, new1->data);
+		       while(new->next != NULL){
+			       strcat(input, new->data);
 			       strcat(input, ",");
-			       new1 = new1->next;
+			       new = new->next;
 		       }
-		       strcat(input, new1->data);
+		       strcat(input, new->data);
 	       }
 	       else{
-		       new = ttmp->actor;
-		       org = update->actor;
-		       char *gar1 = (char*)malloc(sizeof(char)*200);
-		       char *gar2 = (char*)malloc(sizeof(char)*200);
+		       char *gar1 = (char*)calloc(200, sizeof(char));
+		       char *gar2 = (char*)calloc(200, sizeof(char));
 		       while(new->next != NULL){
 			       strcpy(gar1+strlen(gar1), new->data);
 			       strcat(gar1, ",");
@@ -466,7 +466,7 @@ void update_movie(ALL_M *movie, char *option, int serial){
 		       strcat(gar1, new->data);
 		       while(org->next != NULL){
 			       strcpy(gar2+strlen(gar2), org->data);
-			       strcat(gar2, org->data);
+			       strcat(gar2, ",");
 			       org = org->next;
 		       }
 		       strcat(gar2, org->data);
@@ -476,9 +476,8 @@ void update_movie(ALL_M *movie, char *option, int serial){
 			       printf("Do you want to revise?(Y : yes, N : no)\n");
 			       scanf("%s", revise);
 			       getchar();
-			       if(strcmp(revise, "Y")==0){
+			       if(strcmp(revise, "Y")==0)
 				       strcat(input, gar1);
-			       }
 			       else if(strcmp(revise, "N")==0)
 				       strcat(input, "=");
 		       }
@@ -1564,5 +1563,3 @@ int main(){
   commands(director,actor,movie);
   return 0;
 }
-
-
