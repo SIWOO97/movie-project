@@ -302,12 +302,7 @@ void update_movie(ALL_M *movie, char *option, int serial){
 		if(*(option+i) == 'r') *(check_option+4) = 'r';
 		if(*(option+i) == 'a') *(check_option+5) = 'a';
 	}
-	char *input = (char*)malloc(sizeof(char)*300);
-	strcpy(input, "update:");
-	char *snum = (char*)calloc(5, sizeof(char));
-	change_num_to_string(snum, serial);
-	strcat(input, snum);
-	strcat(input, ":");
+	fprintf(mv_l, "update:%d:", serial);
 	if(*(check_option+0) == 't'){
 	       printf("title > ");
 	       scanf("%[^\n]", str);
@@ -318,19 +313,12 @@ void update_movie(ALL_M *movie, char *option, int serial){
 		       printf("Do you want to revise?(Y : yes, N: no)\n");
 		       scanf("%s", revise);
 		       getchar();
-		       if((strcmp(revise, "Y") == 0)){
-			       strcat(input, str);
-			       strcat(input, ":");
-		       }
-		       else if((strcmp(revise, "N")==0))
-			       strcat(input, "=:");
+		       if((strcmp(revise, "Y") == 0)) fprintf(mv_l, "%s:", update->title);
+		       else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
 	       }
-	       else{
-		       strcat(input, str);
-		       strcat(input, ":");
-	       }
+	       else fprintf(mv_l, "%s:", str);
 	}
-	else if(*(check_option+0) == '\0') strcat(input, "=:");
+	else if(*(check_option+0) == '\0') fprintf(mv_l, "=:");
 	if(*(check_option+1) == 'g'){
 		printf("genre > ");
                 scanf("%[^\n]", str);
@@ -341,19 +329,12 @@ void update_movie(ALL_M *movie, char *option, int serial){
                         printf("Do you want to revise?(Y : yes, N: no)\n");
                         scanf("%s", revise);
 			getchar();
-                        if(strcmp(revise, "Y")==0){
-				strcat(input, str);
-				strcat(input, ":");
-			}
-			else if((strcmp(revise, "N")==0))
-				strcat(input, "=:");
+                        if(strcmp(revise, "Y")==0) fprintf(mv_l, "%s:", update->genre);
+			else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
 		}
-                else{
-			strcat(input, str);
-			strcat(input, ":");
-		}
+                else fprintf(mv_l, "%s:", str);
 	}
-	else if(*(check_option+1) == '\0') strcat(input, "=:");
+	else if(*(check_option+1) == '\0') fprintf(mv_l, "=:");
 	if(*(check_option+2) == 'd'){
 		printf("director > ");
                 scanf("%[^\n]", str);
@@ -364,19 +345,12 @@ void update_movie(ALL_M *movie, char *option, int serial){
                         printf("Do you want to revise?(Y : yes, N: no)\n");
                         scanf("%s", revise);
 			getchar();
-                        if(strcmp(revise, "Y")==0){
-				strcat(input, str);
-				strcat(input, ":");
-			}
-			else if((strcmp(revise, "N")==0))
-				strcat(input, "=:");
+                        if(strcmp(revise, "Y")==0) fprintf(mv_l, "%s:", update->director->data);
+			else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
 		}
-                else{
-			strcat(input, str);
-			strcat(input, ":");
-		}
+                else fprintf(mv_l, "%s:", str);
 	}
-	else if(*(check_option+2) == '\0') strcat(input, "=:");
+	else if(*(check_option+2) == '\0') fprintf(mv_l, "=:");
 	if(*(check_option+3) == 'y'){
 		printf("year > ");
                 scanf("%d", &num);
@@ -388,19 +362,12 @@ void update_movie(ALL_M *movie, char *option, int serial){
                         printf("Do you want to revise?(Y : yes, N: no)\n");
                         scanf("%s", revise);
 			getchar();
-                        if(strcmp(revise, "Y")==0){
-				strcat(input, snum);
-				strcat(input, ":");
-			}
-			else if((strcmp(revise, "N")==0))
-				strcat(input, "=:");
+                        if(strcmp(revise, "Y")==0) fprintf(mv_l, "%d:", update->year);
+			else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
 		}
-                else{
-			strcat(input, snum);
-			strcat(input, ":");
-		}
+                else fprintf(mv_l, "%d:", num);
 	}
-	else if(*(check_option+3) == '\0') strcat(input, "=:");
+	else if(*(check_option+3) == '\0') fprintf(mv_l, "=:");
 	if(*(check_option+4) == 'r'){
 		printf("running time > ");
                 scanf("%d", &num);
@@ -412,19 +379,12 @@ void update_movie(ALL_M *movie, char *option, int serial){
                         printf("Do you want to revise?(Y : yes, N: no)\n");
                         scanf("%s", revise);
 			getchar();
-                        if(strcmp(revise, "Y")==0){
-				strcat(input, snum);
-				strcat(input, ":");
-			}
-			else if((strcmp(revise, "N")==0))
-				strcat(input, "=:");
+                        if(strcmp(revise, "Y")==0) fprintf(mv_l, "%d:", update->time);
+			else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
 		}
-                else{
-			strcat(input, snum);
-			strcat(input, ":");
-		}
+                else fprintf(mv_l, "%d:", num);
 	}
-	else if(*(check_option+4) == '\0') strcat(input, "=:");
+	else if(*(check_option+4) == '\0') fprintf(mv_l, "=:");
         if(*(check_option+5) == 'a'){
 	       printf("actor > ");
 	       
@@ -449,11 +409,10 @@ void update_movie(ALL_M *movie, char *option, int serial){
 	       org = update->actor;
 	       if(a != b){
 		       while(new->next != NULL){
-			       strcat(input, new->data);
-			       strcat(input, ",");
+			       fprintf(mv_l, "%s,", new->data);
 			       new = new->next;
 		       }
-		       strcat(input, new->data);
+		       fprintf(mv_l, "%s\n", new->data);
 	       }
 	       else{
 		       char *gar1 = (char*)calloc(200, sizeof(char));
@@ -470,23 +429,34 @@ void update_movie(ALL_M *movie, char *option, int serial){
 			       org = org->next;
 		       }
 		       strcat(gar2, org->data);
+		       new = ttmp->actor;
+		       org = update->actor;
 		       if(strcmp(gar1, gar2)==0){
 			       printf("You have the same records.\n");
 			       printf("actors : %s\n", gar1);
 			       printf("Do you want to revise?(Y : yes, N : no)\n");
 			       scanf("%s", revise);
 			       getchar();
-			       if(strcmp(revise, "Y")==0)
-				       strcat(input, gar1);
-			       else if(strcmp(revise, "N")==0)
-				       strcat(input, "=");
+			       if(strcmp(revise, "Y")==0){
+				       while(org->next != NULL){
+					       fprintf(mv_l, "%s,", org->data);
+					       org = org->next;
+				       }
+				       fprintf(mv_l, "%s\n", org->data);
+			       }
+			       else if(strcmp(revise, "N")==0) fprintf(mv_l, "=\n");
 		       }
-		       else strcat(input, gar1);
+		       else{
+			       while(new->next != NULL){
+				       fprintf(mv_l, "%s,", new->data);
+				       new = new->next;
+			       }
+			       fprintf(mv_l, "%s\n", new->data);
+		       }
 	       }
+		       
 	}
-	else if(*(check_option+5) == '\0') strcat(input, "=");
-	fprintf(mv_l, "%s", input);
-	fprintf(mv_l, "\n");
+	else if(*(check_option+5) == '\0') fprintf(mv_l, "=\n");
 	fclose(mv_l);
 }
 int delete_movie(ALL_M *movie,int serial){
@@ -560,6 +530,81 @@ int add_movie_list(ALL_M *movie,FILE *mv_l){
   new_movie -> next_movie = movie -> tail;
   free(read_data);
 }
+void update_movie_list(ALL_M *movie,FILE *mv_l){
+	char *read_data = (char*)calloc(30, sizeof(char));
+	int read_num;
+	fscanf(mv_l, "%*c%d", &read_num);
+
+	LINK_M *tmp = (LINK_M*)malloc(sizeof(LINK_M));
+	tmp = movie->head;
+	LINK_M *update = (LINK_M*)malloc(sizeof(LINK_M));
+	while(tmp->next_movie != movie->tail){
+		tmp = tmp->next_movie;
+		if(tmp->serial_num == read_num){
+			update = tmp;
+			break;
+		}
+	}
+	update->serial_num = read_num;
+	
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->title, read_data);
+	
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->genre, read_data);
+	
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->director->data, read_data);
+	
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0){
+		read_num = atoi(read_data);
+		update->year = read_num;
+	}
+	
+	fscanf(mv_l, "%*c%[^:]%*c", read_data);
+	if(strcmp(read_data, "=")!=0){
+		read_num = atoi(read_data);
+		update->time = read_num;
+	}
+
+	char *temp = (char*)calloc(300, sizeof(char));
+	fscanf(mv_l, "%[^\n]%*c", temp);
+	if(strcmp(temp, "=")!=0){
+		LINK_W *h = (LINK_W*)malloc(sizeof(LINK_W));
+		LINK_W *l = (LINK_W*)malloc(sizeof(LINK_W));
+		h = update->actor;
+		while(h->next != NULL){
+			LINK_W *d = (LINK_W*)malloc(sizeof(LINK_W));
+			d = h;
+			l = d->next;
+			free(d->data);
+			free(d);
+			h = l;
+		}
+		free(l->data);
+		free(l);
+		update->actor = (LINK_W *)malloc(sizeof(LINK_W));
+		h->data = strtok(temp, ",");
+		while(h->data != NULL){
+			char *check = (char*)malloc(sizeof(char)*30);
+			check = strtok(NULL, ",");
+			if(check == NULL){
+				h->next = NULL;
+				break;
+			}
+			else{
+				h->next = (LINK_W *)malloc(sizeof(LINK_W));
+				h = h->next;
+				h->next = NULL;
+				h->data = check;
+			}
+		}
+	}
+}
 int delete_movie_list(ALL_M *movie,FILE *mv_l){
   LINK_M *pre_movie, *del_movie;
   int read_num;
@@ -601,6 +646,7 @@ int scan_movie_log(ALL_M *movie){
     break;
   }
   else if(strcmp(input_data,"update")==0){
+    update_movie_list(movie,mv_l);
     read_text=fgetc(mv_l);
     fseek(mv_l,-1,SEEK_CUR);
     if(read_text==EOF)
