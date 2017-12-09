@@ -50,6 +50,8 @@ int menu_func(char *input) {
                token = strtok(NULL, sector);
                strcpy(file_name, token);
             }
+          }
+            if(*(optionm) == '-'){
             if(*(factor) == 'm'){
             for(int i=0; i<check; i++){
                		if(*(option1+i) == 't'){
@@ -67,7 +69,7 @@ int menu_func(char *input) {
                   if(*(option1+i) == 'r'){
                     *(check_option+4) = 'r';
                   }
-               		if(*(option1+i) == 'a'){
+      ``         		if(*(option1+i) == 'a'){
                      *(check_option+5) = 'a';
                    }
                  }
