@@ -134,23 +134,206 @@ void make_director_admin(ALL_D **director){
   (*director) -> tail -> next_director = (*director) -> tail;
   (*director) -> size = 0;
 }
-void print_m(ALL_M *movie){
-  LINK_W *print_word;
-  LINK_M *save_movie;
-  save_movie = movie -> head;
-  print_word = (LINK_W *)malloc(sizeof(LINK_W));
+void save_file(ALL_M *movie,ALL_A *actor,ALL_D *director,char tag,char *option1){
+char *check_option,*filename;
+int check = strlen(option1);
+int i=0;
+FILE *file;
+filename = (char *)calloc(100,sizeof(char));
+check_option = (char *)calloc(100,sizeof(char));
+LINK_M *save_movie;
+LINK_A *save_actor;
+LINK_D *save_director;
+LINK_W *save_word;
+save_movie = movie -> head;
+save_actor = actor -> head;
+save_director = director -> head;
+scanf("%s%*c",filename);
+file = fopen(filename,"w");
+  if(tag == 'm'){
+      for(int i=0; i<check; i++){
+         if(*(option1+i) == 't'){
+        *(check_option+0) = 't';
+      }
+      if(*(option1+i) == 'g'){
+        *(check_option+1) = 'g';
+      }
+      if(*(option1+i) == 'd'){
+          *(check_option+2) = 'd';
+      }
+      if(*(option1+i) == 'y'){
+        *(check_option+3) = 'y';
+      }
+      if(*(option1+i) == 'r'){
+        *(check_option+4) = 'r';
+      }
+               if(*(option1+i) == 'a'){
+         *(check_option+5) = 'a';
+       }
+     }
   while(save_movie -> next_movie != movie -> tail){
-    save_movie = save_movie -> next_movie;
-    printf("%d:%s:%s:%s:%d:%d:",save_movie -> serial_num,save_movie -> title,save_movie -> genre,save_movie -> director -> data,save_movie -> year,save_movie -> time);
-    print_word = save_movie -> actor;
-    while(print_word -> next != NULL){
-      printf("%s,",print_word->data);
-      print_word = print_word->next;
-    }
-    printf("%s\n", print_word->data);
+  save_movie = save_movie -> next_movie;
+  if(*(check_option+0) == 't'){
+  fprintf(file,"Title :%s\n",save_movie -> title);
+  }
+  if(*(check_option+1) == 'g'){
+  fprintf(file,"Genre :%s\n",save_movie -> genre);
+  }
+  if(*(check_option+2) == 'd'){
+  fprintf(file,"Director :%s\n",save_movie -> director -> data);
+  }
+  if(*(check_option+3) == 'y'){
+  fprintf(file,"Year :%d\n",save_movie -> year);
+  }
+  if(*(check_option+4) == 'r'){
+  fprintf(file,"Running Time :%d\n",save_movie -> time);
+  }
+  if(*(check_option+5) == 'a'){
+  save_word = save_movie -> actor;
+  i=1;
+  while(save_word -> next != NULL){
+  fprintf(file,"Actor %d : %s\n",i,save_word -> data);
+  save_word = save_word -> next;
+  i++;
+  }
+  fprintf(file,"Actor %d : %s\n",i,save_word -> data);
   }
 }
-void make_movie_list_file(ALL_M *movie){//이거 왜 3번도는지 모르겠음.... 짜증남 이유를 모름
+fclose(file);
+  }
+  else if(tag == 'd'){
+    for(int i=0; i<check; i++){
+       if(*(option1+i) == 'n'){
+      *(check_option+0) = 'n';
+    }
+    if(*(option1+i) == 's'){
+      *(check_option+1) = 's';
+    }
+    if(*(option1+i) == 'b'){
+        *(check_option+2) = 'b';
+    }
+    if(*(option1+i) == 'm'){
+      *(check_option+3) = 'm';
+    }
+   }
+   while(save_director -> next_director != director -> tail){
+     save_director = save_director -> next_director;
+     if(*(check_option+0) == 'n'){
+     fprintf(file,"Name :%s\n",save_director -> name);
+     }
+     if(*(check_option+1) == 's'){
+     fprintf(file,"Sex :%c\n",save_director -> sex);
+     }
+     if(*(check_option+2) == 'b'){
+     fprintf(file,"Birth :%d\n",save_director -> birth);
+     }
+     if(*(check_option+3) == 'm'){
+       save_word = save_director -> title;
+       i=1;
+       while(save_word -> next != NULL){
+     fprintf(file,"Movie %d :%s\n",i,save_word -> data);
+     save_word = save_word -> next;
+     i++;
+   }
+   fprintf(file,"Movie %d :%s\n",i,save_word -> data);
+     }
+   }
+   fclose(file);
+  }
+  else if(tag == 'a'){
+    for(int i=0; i<check; i++){
+       if(*(option1+i) == 'n'){
+      *(check_option+0) = 'n';
+    }
+    if(*(option1+i) == 's'){
+      *(check_option+1) = 's';
+    }
+    if(*(option1+i) == 'b'){
+        *(check_option+2) = 'b';
+    }
+    if(*(option1+i) == 'm'){
+      *(check_option+3) = 'm';
+    }
+   }
+   while(save_actor -> next_actor != actor -> tail){
+     save_actor = save_actor -> next_actor;
+     if(*(check_option+0) == 'n'){
+     fprintf(file,"Name :%s\n",save_actor -> name);
+     }
+     if(*(check_option+1) == 's'){
+     fprintf(file,"Sex :%c\n",save_actor -> sex);
+     }
+     if(*(check_option+2) == 'b'){
+     fprintf(file,"Birth :%d\n",save_actor -> birth);
+     }
+     if(*(check_option+3) == 'm'){
+       save_word = save_actor -> title;
+       i=1;
+       while(save_word -> next != NULL){
+     fprintf(file,"Movie %d :%s\n",i,save_word -> data);
+     save_word = save_word -> next;
+     i++;
+   }
+   fprintf(file,"Movie %d :%s\n",i,save_word -> data);
+     }
+   }
+   fclose(file);
+  }
+}
+void save(ALL_M *movie,ALL_A *actor, ALL_D *director,char tag){
+  FILE *file;
+  LINK_W *print_word;
+  LINK_M *save_movie;
+  LINK_A *save_actor;
+  LINK_D *save_director;
+  save_actor = actor -> head;
+  save_director = director -> head;
+  save_movie = movie -> head;
+  print_word = (LINK_W *)malloc(sizeof(LINK_W));
+  if(tag == 'm'){
+    file = fopen("movie_list","w");
+  while(save_movie -> next_movie != movie -> tail){
+    save_movie = save_movie -> next_movie;
+    fprintf(file,"%d:%s:%s:%s:%d:%d:",save_movie -> serial_num,save_movie -> title,save_movie -> genre,save_movie -> director -> data,save_movie -> year,save_movie -> time);
+    print_word = save_movie -> actor;
+    while(print_word -> next != NULL){
+      fprintf(file,"%s,",print_word->data);
+      print_word = print_word->next;
+    }
+    fprintf(file,"%s\n", print_word->data);
+  }
+  fclose(file);
+}
+else if(tag == 'a'){
+  file = fopen("actor_list","w");
+  while(save_actor -> next_actor != actor -> tail){
+    save_actor = save_actor -> next_actor;
+    fprintf(file,"%d:%s:%c:%d",save_actor -> serial_num,save_actor -> name,save_actor ->sex,save_actor -> birth);
+    print_word = save_actor -> title;
+    while(print_word -> next != NULL){
+      fprintf(file,"%s,",print_word -> data);
+      print_word = print_word -> next;
+    }
+    fprintf(file,"%s\n",print_word -> data);
+  }
+  fclose(file);
+}
+else if(tag == 'd'){
+  file = fopen("director_list","w");
+  while(save_director -> next_director != director -> tail){
+    save_director = save_director -> next_director;
+    fprintf(file,"%d:%s:%c:%d",save_director -> serial_num,save_director -> name,save_director ->sex,save_director -> birth);
+    print_word = save_director -> title;
+    while(print_word -> next != NULL){
+      fprintf(file,"%s,",print_word -> data);
+      print_word = print_word -> next;
+    }
+    fprintf(file,"%s\n",print_word -> data);
+  }
+  fclose(file);
+}
+}
+void make_movie_list_file(ALL_M *movie){
   FILE *mv_list;
   mv_list = fopen("movie_list","w");
   LINK_W *print_word;
@@ -1812,6 +1995,7 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   //serach print add update delete sort save end
   char *command,*input_data;//문자열을 입력받을 char형 포인터 배열을 선언하였음
   char input_text,option;//옵션을 받을 char형 변수를 선언함
+  char checking;
   int input_num,i;
   scan_movie_log(movie);
   scan_actor_log(actor);
@@ -1822,6 +2006,7 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
     printf("You can use add, update, delete, search, sort, save, end commands.\n");//사용 가능한 명령어를 보여줌
   while(1){
     printf("(movie)");
+    input_data = (char *)calloc(100,sizeof(char));
   command =(char *)malloc(sizeof(char)*10);//command포인터에 동적 메모리를 할당하였음
   scanf("%s", command);//명령어를 입력받음
   if(strcmp(command, "add") == 0){//파일에 새로운 내용을 더함
@@ -1894,6 +2079,7 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
     else if(check ==' '){
       char checking;
       scanf("%*c%c",&checking);
+      if(checking == 'f'){
       getchar();
       sorting_file(movie,actor,director,input_text,option);
       make_movie_admin(&movie);
@@ -1906,6 +2092,7 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
       compare_actor_word(movie,actor);
       compare_director_word(movie,director);
       printf("%c",checking);
+    }
     }
   }
   else if(strcmp(command,"print")==0){//파일의 내용을 출력함
@@ -1934,7 +2121,21 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
 
   }
   else if(strcmp(command,"save")==0){//LIST파일에 내용을 저장함
-
+    scanf("%*c%c",&input_text);
+    checking = getchar();
+    if(checking == '\n'){
+      save(movie,actor,director,input_text);
+    }
+    else if(checking == ' '){
+      scanf("%*c%s%*c",input_data);
+      checking = getchar();
+      if(checking == '-'){
+        checking = getchar();
+        if(checking == 'f'){
+          save_file(movie,actor,director,input_text,input_data);
+      }
+      }
+    }
   }
   else if(strcmp(command,"end")==0){//프로그램의 실행을 멈춘다
     //파일의 내용을 저장할 필요가 있으면 저장도 해주면 좋다
