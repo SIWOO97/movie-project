@@ -24,6 +24,10 @@ typedef struct compare{
   void *com_word;
 }DIR;
 
+typedef struct sorting{
+  char *data;
+  void *connect;
+}St;
 typedef struct linked_movie{//MOVIE에 해당하는 구조체를 선언함
   int serial_num;
   char *title;
@@ -91,12 +95,20 @@ int compare(const void *a, const void *b){
   return(strcmp(*(char**)a,*(char**)b));
 }
 int compare_num(const void *a, const void *b){
-  if(*(int *)a > *(int *)b)
-  return 1;
+  if(*(int *)a < *(int *)b)
+  return -1;
   else if(*(int *)a == *(int *)b)
   return 0;
   else
-  return -1;
+  return 1;
+}
+int compare_w(const void *a, const void *b){
+  return strcmp((char*)a,(char*)b);
+}
+int compare_new(const void *a,const void *b){
+  St *m = (St *)a;
+  St *n = (St *)b;
+  return(strcmp(*(char**)m->data,*(char**)n->data));
 }
 void make_movie_admin(ALL_M **movie){
   *movie = (ALL_M *)malloc(sizeof(ALL_M));
@@ -104,6 +116,7 @@ void make_movie_admin(ALL_M **movie){
   (*movie) -> tail = (LINK_M *)calloc(1,sizeof(LINK_M));
   (*movie) -> head -> next_movie = (*movie) -> tail;
   (*movie) -> tail -> next_movie = (*movie) -> tail;
+  (*movie) -> size = 0;
 }
 void make_actor_admin(ALL_A **actor){
   *actor = (ALL_A *)malloc(sizeof(ALL_A));
@@ -111,6 +124,7 @@ void make_actor_admin(ALL_A **actor){
   (*actor) -> tail = (LINK_A *)malloc(sizeof(LINK_A));
   (*actor) -> head -> next_actor = (*actor) -> tail;
   (*actor) -> tail -> next_actor = (*actor) -> tail;
+  (*actor) -> size = 0;
 }
 void make_director_admin(ALL_D **director){
   *director = (ALL_D *)malloc(sizeof(ALL_D));
@@ -118,6 +132,7 @@ void make_director_admin(ALL_D **director){
   (*director) -> tail = (LINK_D *)malloc(sizeof(LINK_D));
   (*director) -> head -> next_director = (*director) -> tail;
   (*director) -> tail -> next_director = (*director) -> tail;
+  (*director) -> size = 0;
 }
 void print_m(ALL_M *movie){
   LINK_W *print_word;
@@ -255,6 +270,7 @@ void add_movie(ALL_M *movie){
   new_movie -> next_movie = save_movie;
   save_movie -> next_movie = movie -> tail;
   free(input_data);
+  movie -> size++;
   fclose(mv_l);
 }
 int delete_movie(ALL_M *movie,int serial){
@@ -270,6 +286,7 @@ int delete_movie(ALL_M *movie,int serial){
       fprintf(mv_d,"delete:%d::::::\n", serial);
       fclose(mv_d);
       free(pre_movie);
+      movie -> size--;
       return 1;
     }
     del_movie = pre_movie;
@@ -363,6 +380,7 @@ int scan_movie_log(ALL_M *movie){
   fscanf(mv_l,"%[^:]s",input_data);
   if(strcmp(input_data,"add")==0){
     add_movie_list(movie,mv_l);
+    movie -> size++;
     read_text=fgetc(mv_l);
     fseek(mv_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -376,6 +394,7 @@ int scan_movie_log(ALL_M *movie){
   }
   else if(strcmp(input_data,"delete")==0){
     delete_movie_list(movie,mv_l);
+    movie -> size--;
     read_text=fgetc(mv_l);
     fseek(mv_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -513,6 +532,7 @@ void add_actor(ALL_A *actor){
   new_actor -> next_actor = save_actor;
   save_actor -> next_actor = actor -> tail;
   free(input_data);
+  actor -> size ++;
   fclose(act_l);
 }
 int delete_actor(ALL_A *actor,int serial){
@@ -528,6 +548,7 @@ int delete_actor(ALL_A *actor,int serial){
       fprintf(act_d,"delete:%d::::::\n", serial);
       fclose(act_d);
       free(pre_actor);
+      actor -> size --;
       return 1;
     }
     del_actor = pre_actor;
@@ -616,6 +637,7 @@ int scan_actor_log(ALL_A *actor){
   fscanf(act_l,"%[^:]s",input_data);
   if(strcmp(input_data,"add")==0){
     add_actor_list(actor,act_l);
+    actor -> size ++;
     i++;
     read_text=fgetc(act_l);
     fseek(act_l,-1,SEEK_CUR);
@@ -630,6 +652,7 @@ int scan_actor_log(ALL_A *actor){
   }
   else if(strcmp(input_data,"delete")==0){
     delete_actor_list(actor,act_l);
+    actor -> size --;
     read_text=fgetc(act_l);
     fseek(act_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -757,6 +780,7 @@ void add_director(ALL_D *director){
   new_director = new_director -> next_director;
   new_director -> next_director = save_director;
   save_director -> next_director = director -> tail;
+  director -> size ++;
   free(input_data);
   fclose(dir_l);
 }
@@ -774,6 +798,7 @@ int delete_director(ALL_D *director,int serial){
       fclose(dir_d);
       free(pre_director);
       return 1;
+      director -> size--;
     }
     del_director = pre_director;
     pre_director = pre_director -> next_director;
@@ -861,7 +886,7 @@ int scan_director_log(ALL_D *director){
   fscanf(dir_l,"%[^:]s",input_data);
   if(strcmp(input_data,"add")==0){
     add_director_list(director,dir_l);
-    i++;
+      director -> size ++;
     read_text=fgetc(dir_l);
     fseek(dir_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -875,6 +900,7 @@ int scan_director_log(ALL_D *director){
   }
   else if(strcmp(input_data,"delete")==0){
     delete_director_list(director,dir_l);
+      director -> size --;
     read_text=fgetc(dir_l);
     fseek(dir_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -917,193 +943,869 @@ int print_director_list(ALL_D *director,int serial){
 }
 }
 void sorting(ALL_M *movie, ALL_A *actor,ALL_D *director,char tag,char option){
-  char **copy,**copy_word;
-  int *copy_num;
+  char **copy,**copy_dir,checking,*check_sex;
+  int copy_num,*num;
   int i,check,k,ch;
   LINK_M *save_movie,*print_movie;
-  LINK_A *save_actor;
-  LINK_D *save_director;
-  LINK_W *print_word;
+  LINK_A *save_actor,*print_actor;
+  LINK_D *save_director,*print_director;
+  LINK_W *print_word,*saving;
   save_movie = movie -> head;
   save_actor = actor -> head;
   save_director = director -> head;
-  copy = (char **)calloc(1024,sizeof(char *));
-  copy_word = (char **)calloc(1024,sizeof(char *));
+  copy_dir = (char **)calloc(100,sizeof(char *));
+  copy = (char **)calloc(100,sizeof(char *));
+  check_sex = (char *)calloc(1000,sizeof(char));
+  num = (int *)calloc(1000,sizeof(int));
   if(tag == 'm'){
     if(option == 't'){
       while(save_movie -> next_movie != movie -> tail){
         save_movie = save_movie -> next_movie;
-        *(copy+i) = calloc(1024,sizeof(char));
-        strcpy(*(copy+i),save_movie -> title);
-        printf("%s\n",*(copy+i));
+        *(copy+i) = (char *)calloc(1024,sizeof(char));
+        *(copy+i) = save_movie -> title;
         i++;
       }
-      //qsort(*copy,i,sizeof(copy),compare);
-      while(check != i){
-        print_movie = movie -> head;
-        while(print_movie -> next_movie != movie -> tail){
-          print_movie = print_movie -> next_movie;
-          if(strcmp(*(copy+check),print_movie -> title) == 0){
-          printf("%s:%s:%s:",print_movie -> title, print_movie -> genre, print_movie -> director -> data);
-          printf("%d:%d:",print_movie -> year, print_movie -> time);
-          print_word = print_movie -> actor;
-          while(print_word -> next != NULL){
-            printf("%s,",print_word->data);
-            print_word = print_word->next;
-          }
-          printf("%s\n", print_word->data);
-          check++;
-          break;
-          }
-        }
-      }
-      free(copy);
-
-    }
-    else if(option == 'g'){
+      qsort((void *)copy,movie -> size,sizeof(char *), compare);
+      save_movie = movie -> head;
+      for(check=0;check<movie -> size;check++){
       while(save_movie -> next_movie != movie -> tail){
-        save_movie = save_movie -> next_movie;
-        *(copy+i) = calloc(1024,sizeof(char));
-        strcpy(*(copy+i),save_movie -> genre);
-        i++;
-      }
-      qsort(*copy,movie->size,sizeof(char),compare);
-      while(check < movie -> size){
+        if(strcmp(*(copy+check),save_movie -> next_movie -> title)==0){
+          print_movie = save_movie -> next_movie;
+          saving = print_movie -> actor;
+          printf("%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+          while(print_movie -> actor -> next != NULL){
+            printf("%s:",print_movie -> actor -> data);
+            print_movie -> actor = print_movie -> actor -> next;
+          }
+          printf("%s\n",print_movie -> actor -> data);
+          print_movie -> actor = saving;
+          save_movie -> next_movie = save_movie -> next_movie -> next_movie;
         save_movie = movie -> head;
-        while(save_movie -> next_movie != movie -> tail){
-          save_movie = save_movie -> next_movie;
-          if(strcmp(*(copy+check),save_movie -> genre) == 0){
-          printf("%s:%s:%s:",save_movie -> title, save_movie -> genre, save_movie -> director -> data);
-          printf("%d:%d:",save_movie -> year, save_movie -> time);
-          print_word = save_movie -> actor;
-          while(print_word -> next != NULL){
-            printf("%s,",print_word->data);
-            print_word = print_word->next;
-          }
-          printf("%s\n", print_word->data);
-          check++;
-          break;
-          }
-        }
+        break;
       }
-      free(copy);
+      save_movie = save_movie -> next_movie;
     }
-    else if(option == 'd'){
-      while(save_movie -> next_movie != movie -> tail){
-        save_movie = save_movie -> next_movie;
-        *(copy+i) = calloc(1024,sizeof(char));
-        strcpy(*(copy+i),save_movie -> director -> data);
-        i++;
-      }
-      qsort(*copy,movie->size,sizeof(char),compare);
-      while(check < movie -> size){
-        save_movie = movie -> head;
-        while(save_movie -> next_movie != movie -> tail){
-          save_movie = save_movie -> next_movie;
-          if(strcmp(*(copy+check),save_movie -> director -> data) == 0){
-          printf("%s:%s:%s:",save_movie -> title, save_movie -> genre, save_movie -> director -> data);
-          printf("%d:%d:",save_movie -> year, save_movie -> time);
-          print_word = save_movie -> actor;
-          while(print_word -> next != NULL){
-            printf("%s,",print_word->data);
-            print_word = print_word->next;
-          }
-          printf("%s\n", print_word->data);
-          check++;
-          break;
-          }
-        }
-      }
-      free(copy);
-    }
-    else if(option == 'y'){
-      while(save_movie -> next_movie != movie -> tail){
-        save_movie = save_movie -> next_movie;
-        copy_num = (int *)calloc(1024,sizeof(int));
-        *(copy_num+i) = save_movie -> year;
-        printf("%d   ",save_movie -> year);
-        printf("%d\n",*(copy_num+i));
-        i++;
-       }
-       qsort(copy_num,i,sizeof(int),compare_num);
-       for(int j=0;j<i;j++){
-         printf("%d\n",*(copy_num+j));
-       }
-       while(check > movie -> size){
-         save_movie = movie -> head;
-         while(save_movie -> next_movie != movie -> tail){
-           save_movie = save_movie -> next_movie;
-           if(*(copy_num+check)==save_movie -> year){
-             printf("%s:%s:%s:",save_movie -> title, save_movie -> genre, save_movie -> director -> data);
-             printf("%d:%d\n",save_movie -> year, save_movie -> time);
-             check++;
-             break;
-           }
-         }
-       }
-    }
-    else if(option == 'r'){
-      while(save_movie -> next_movie != movie -> tail){
-        save_movie = save_movie -> next_movie;
-        copy_num = (int *)calloc(1024,sizeof(int));
-        *(copy_num+i) = save_movie -> time;
-        i++;
-      }
-       qsort(copy_num,movie -> size , sizeof(int),compare_num);
-       while(check < movie -> size){
-         save_movie = movie -> head;
-         while(save_movie -> next_movie != movie -> tail){
-           save_movie = save_movie -> next_movie;
-           if(save_movie -> time == *(copy_num+check)){
-             //출력
-             check++;
-             break;
-           }
-         }
-       }
-    }
-    else if(option == 'a'){//qsort 두 번 사용함
-      //먼저 각각의 링크드 리스트 안에 있는 액터들을 qsort해주고
-      //그 다음에 맨 앞 글자들 끼리 qsort해주면서 출력해야 됨
-      while(save_movie -> next_movie != movie -> tail){
-        save_movie = save_movie -> next_movie;
-        *(copy+i) = calloc(1024,sizeof(char));
-        strcpy(*(copy+i),save_movie -> actor -> data);
-        i++;
-      }
-      qsort(*copy,movie->size,sizeof(char),compare);
-      while(check < movie -> size){
-        save_movie = movie -> head;
-        while(save_movie -> next_movie != movie -> tail){
-          save_movie = save_movie -> next_movie;
-          if(strcmp(*(copy+check),save_movie -> actor -> data)==0){
-            //actor내용 전 까지 출력
-            print_word = save_movie -> actor;
-            while(print_word -> next != NULL){
-              *(copy+ch) = calloc(1024,sizeof(char));
-              strcpy(*(copy+ch),print_word -> data);
-              print_word = print_word -> next;
-              ch++;
-            }
-            *(copy+ch) = calloc(1024,sizeof(char));
-            strcpy(*(copy+ch),print_word -> data);
-            print_word = print_word -> next;
-            qsort(*copy_word,ch,sizeof(char),compare);
-            for(k=0;k<ch;k++){
-              printf("%s,",*(copy+k));
-            }
-            printf("%s,",*(copy+k));
-          }
-        }
-      }
     }
   }
-  else if(tag == 'd'){
 
+  else if(option == 'g'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_movie -> genre;
+      i++;
+    }
+    qsort((void *)copy,movie -> size,sizeof(char *), compare);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(strcmp(*(copy+check),save_movie -> next_movie -> genre)==0){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        printf("%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          printf("%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        printf("%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
   }
-  else if(tag == 'a'){
+  }
+  }
+  else if(option == 'd'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_movie -> director -> data;
+      i++;
+    }
+    qsort((void *)copy,movie -> size,sizeof(char *), compare);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(strcmp(*(copy+check),save_movie -> next_movie -> director -> data)==0){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        printf("%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          printf("%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        printf("%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
+  }
+  }
+  }
+  else if(option == 'a'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_movie -> actor -> data;
+      i++;
+    }
+    qsort((void *)copy,movie -> size,sizeof(char *), compare);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(strcmp(*(copy+check),save_movie -> next_movie -> actor -> data)==0){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        printf("%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          printf("%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        printf("%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
+  }
+  }
+  }
+  else if(option == 'y'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(num+i) = save_movie -> year;
+      i++;
+    }
+    qsort(num,movie -> size,sizeof(int), compare_num);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(*(num+check) == save_movie -> next_movie -> year){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        printf("%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          printf("%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        printf("%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
+  }
+  }
+  }
+  else if(option == 'r'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(num+i) = save_movie -> time;
+      i++;
+    }
+    qsort(num,movie -> size,sizeof(int), compare_num);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(*(num+check) == save_movie -> next_movie -> time){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        printf("%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          printf("%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        printf("%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
+  }
+  }
+  }
+}//마무리
+else if(tag == 'd'){
+  if(option == 'n'){
+    while(save_director -> next_director != director -> tail){
+    	save_director = save_director -> next_director;
+    	*(copy+i) = (char *)calloc(1024,sizeof(char));
+    	*(copy+i) = save_director -> name;
+    	i++;
+    }
+    qsort((void *)copy,director -> size,sizeof(char *), compare);
+    save_director = director -> head;
+    for(check=0;check<director -> size;check++){
+    while(save_director -> next_director != director -> tail){
+    	if(strcmp(*(copy+check),save_director -> next_director -> name)==0){
+    		print_director = save_director -> next_director;
+    		saving = print_director -> title;
+    		printf("%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+        while(print_director -> title -> next != NULL){
+          printf("%s,",print_director -> title -> data);
+    			print_director -> title = print_director -> title -> next;
+    		}
+    		printf("%s\n",print_director -> title -> data);
+    		print_director -> title = saving;
+    		save_director -> next_director = save_director -> next_director -> next_director;
+    	save_director = director -> head;
+    	break;
+    }
+    save_director = save_director -> next_director;
+    }
+    }
+  }
+else if(option == 's'){
+  while(save_director -> next_director != director -> tail){
+    save_director = save_director -> next_director;
+    *(check_sex+i) = save_director -> sex;
+    i++;
+  }
+qsort((void *)check_sex,director -> size,sizeof(char ), compare_w);
+  save_director = director -> head;
+  for(check=0;check<director -> size;check++){
+  while(save_director -> next_director != director -> tail){
+    if(*(check_sex+check)==save_director -> next_director -> sex){
+      print_director = save_director -> next_director;
+      saving = print_director -> title;
+      printf("%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+      while(print_director -> title -> next != NULL){
+        printf("%s,",print_director -> title -> data);
+        print_director -> title = print_director -> title -> next;
+      }
+      printf("%s\n",print_director -> title -> data);
+      print_director -> title = saving;
+      save_director -> next_director = save_director -> next_director -> next_director;
+    save_director = director -> head;
+    break;
+  }
+  save_director = save_director -> next_director;
+  }
+  }
+}
+else if(option == 'b'){
+  while(save_director -> next_director != director -> tail){
+  	save_director = save_director -> next_director;
+  	*(num+i) = save_director -> birth;
+  	i++;
+  }
+  qsort(num,director -> size,sizeof(int), compare_num);
+  save_director = director -> head;
+  for(check=0;check<director -> size;check++){
+  while(save_director -> next_director != director -> tail){
+  	if(*(num+check) == save_director -> next_director -> birth){
+      print_director = save_director -> next_director;
+      saving = print_director -> title;
+      printf("%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+      while(print_director -> title -> next != NULL){
+        printf("%s,",print_director -> title -> data);
+        print_director -> title = print_director -> title -> next;
+      }
+      printf("%s\n",print_director -> title -> data);
+      print_director -> title = saving;
+      save_director -> next_director = save_director -> next_director -> next_director;
+    save_director = director -> head;
+    break;
+  }
+  save_director = save_director -> next_director;
+  }
+}
+}
+else if(option == 'm'){
+  while(save_director -> next_director != director -> tail){
+    save_director = save_director -> next_director;
+    *(copy+i) = (char *)calloc(1024,sizeof(char));
+    *(copy+i) = save_director -> title -> data;
+    i++;
+  }
+  qsort((void *)copy,director -> size,sizeof(char *), compare);
+  save_director = director -> head;
+  for(check=0;check<director -> size;check++){
+  while(save_director -> next_director != director -> tail){
+    if(strcmp(*(copy+check),save_director -> next_director -> title -> data)==0){
+      print_director = save_director -> next_director;
+      saving = print_director -> title;
+      printf("%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+      while(print_director -> title -> next != NULL){
+        printf("%s,",print_director -> title -> data);
+        print_director -> title = print_director -> title -> next;
+      }
+      printf("%s\n",print_director -> title -> data);
+      print_director -> title = saving;
+      save_director -> next_director = save_director -> next_director -> next_director;
+    save_director = director -> head;
+    break;
+  }
+  save_director = save_director -> next_director;
+  }
+  }
+}
+}
+else if(tag == 'a'){
+  if(option == 'n'){
+    while(save_actor -> next_actor != actor -> tail){
+      save_actor = save_actor -> next_actor;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_actor -> name;
+      i++;
+    }
+    qsort((void *)copy,actor -> size,sizeof(char *), compare);
+    save_actor = actor -> head;
+    for(check=0;check<actor -> size;check++){
+    while(save_actor -> next_actor != actor -> tail){
+      if(strcmp(*(copy+check),save_actor -> next_actor -> name)==0){
+        print_actor = save_actor -> next_actor;
+        saving = print_actor -> title;
+        printf("%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+        while(print_actor -> title -> next != NULL){
+          printf("%s,",print_actor -> title -> data);
+          print_actor -> title = print_actor -> title -> next;
+        }
+        printf("%s\n",print_actor -> title -> data);
+        print_actor -> title = saving;
+        save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+      save_actor = actor -> head;
+      break;
+    }
+    save_actor = save_actor -> next_actor;
+    }
+    }
+  }
+else if(option == 's'){
+  while(save_actor -> next_actor != actor -> tail){
+    save_actor = save_actor -> next_actor;
+    *(check_sex+i) = save_actor -> sex;
+    i++;
+  }
+qsort((void *)check_sex,actor -> size,sizeof(char ), compare_w);
+  save_actor = actor -> head;
+  for(check=0;check<actor -> size;check++){
+  while(save_actor -> next_actor != actor -> tail){
+    if(*(check_sex+check)==save_actor -> next_actor -> sex){
+      print_actor = save_actor -> next_actor;
+      saving = print_actor -> title;
+      printf("%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+      while(print_actor -> title -> next != NULL){
+        printf("%s,",print_actor -> title -> data);
+        print_actor -> title = print_actor -> title -> next;
+      }
+      printf("%s\n",print_actor -> title -> data);
+      print_actor -> title = saving;
+      save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+    save_actor = actor -> head;
+    break;
+  }
+  save_actor = save_actor -> next_actor;
+  }
+  }
+}
+else if(option == 'b'){
+  while(save_actor -> next_actor != actor -> tail){
+  	save_actor = save_actor -> next_actor;
+  	*(num+i) = save_actor -> birth;
+  	i++;
+  }
+  qsort(num,actor -> size,sizeof(int), compare_num);
+  save_actor = actor -> head;
+  for(check=0;check<actor -> size;check++){
+  while(save_actor -> next_actor != actor -> tail){
+  	if(*(num+check) == save_actor -> next_actor -> birth){
+      print_actor = save_actor -> next_actor;
+      saving = print_actor -> title;
+      printf("%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+      while(print_actor -> title -> next != NULL){
+        printf("%s,",print_actor -> title -> data);
+        print_actor -> title = print_actor -> title -> next;
+      }
+      printf("%s\n",print_actor -> title -> data);
+      print_actor -> title = saving;
+      save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+    save_actor = actor -> head;
+    break;
+  }
+  save_actor = save_actor -> next_actor;
+  }
+}
+}
+else if(option == 'm'){
+  while(save_actor -> next_actor != actor -> tail){
+    save_actor = save_actor -> next_actor;
+    *(copy+i) = (char *)calloc(1024,sizeof(char));
+    *(copy+i) = save_actor -> title -> data;
+    i++;
+  }
+  qsort((void *)copy,actor -> size,sizeof(char *), compare);
+  save_actor = actor -> head;
+  for(check=0;check<actor -> size;check++){
+  while(save_actor -> next_actor != actor -> tail){
+    if(strcmp(*(copy+check),save_actor -> next_actor -> title -> data)==0){
+      print_actor = save_actor -> next_actor;
+      saving = print_actor -> title;
+      printf("%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+      while(print_actor -> title -> next != NULL){
+        printf("%s,",print_actor -> title -> data);
+        print_actor -> title = print_actor -> title -> next;
+      }
+      printf("%s\n",print_actor -> title -> data);
+      print_actor -> title = saving;
+      save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+    save_actor = actor -> head;
+    break;
+  }
+  save_actor = save_actor -> next_actor;
+  }
+  }
+}
+}
+}
+void sorting_file(ALL_M *movie, ALL_A *actor,ALL_D *director,char tag,char option){
+	char *filename;
+	FILE *file;
+  filename = (char *)calloc(1000,sizeof(char));
+	scanf("%[^\n]%*c",filename);
+	file = fopen(filename,"w");
+	char **copy,**copy_word,checking,*check_sex;
+  int copy_num,*num;
+  int i,check,k,ch;
+  LINK_M *save_movie,*print_movie;
+  LINK_A *save_actor,*print_actor;
+  LINK_D *save_director,*print_director;
+  LINK_W *print_word,*saving;
+  save_movie = movie -> head;
+  save_actor = actor -> head;
+  save_director = director -> head;
+  copy = (char **)calloc(1,sizeof(char *));
+  copy_word = (char **)calloc(1,sizeof(char *));
+  num = (int *)calloc(1000,sizeof(int));
+  check_sex = (char *)calloc(1000,sizeof(char));
+  if(tag == 'm'){
+    if(option == 't'){
+      while(save_movie -> next_movie != movie -> tail){
+      	save_movie = save_movie -> next_movie;
+      	*(copy+i) = (char *)calloc(1024,sizeof(char));
+      	*(copy+i) = save_movie -> title;
+      	i++;
+      }
+      qsort((void *)copy,movie -> size,sizeof(char *), compare);
+      save_movie = movie -> head;
+      for(check=0;check<movie -> size;check++){
+      while(save_movie -> next_movie != movie -> tail){
+      	if(strcmp(*(copy+check),save_movie -> next_movie -> title)==0){
+      		print_movie = save_movie -> next_movie;
+      		saving = print_movie -> actor;
+      		fprintf(file,"%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+      		while(print_movie -> actor -> next != NULL){
+      			fprintf(file,"%s:",print_movie -> actor -> data);
+      			print_movie -> actor = print_movie -> actor -> next;
+      		}
+      		fprintf(file,"%s\n",print_movie -> actor -> data);
+      		print_movie -> actor = saving;
+      		save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      	save_movie = movie -> head;
+      	break;
+      }
+      save_movie = save_movie -> next_movie;
+      }
+      }
+    fclose(file);
+  }
 
+  else if(option == 'g'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_movie -> genre;
+      i++;
+    }
+    qsort((void *)copy,movie -> size,sizeof(char *), compare);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(strcmp(*(copy+check),save_movie -> next_movie -> genre)==0){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        fprintf(file,"%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          fprintf(file,"%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        fprintf(file,"%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
+    }
+    }
+  fclose(file);
   }
+  else if(option == 'd'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_movie -> director -> data;
+      i++;
+    }
+    qsort((void *)copy,movie -> size,sizeof(char *), compare);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(strcmp(*(copy+check),save_movie -> next_movie -> director -> data)==0){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        fprintf(file,"%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          fprintf(file,"%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        fprintf(file,"%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
+    }
+    }
+  fclose(file);
+  }
+  else if(option == 'a'){
+    while(save_movie -> next_movie != movie -> tail){
+      save_movie = save_movie -> next_movie;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_movie -> actor -> data;
+      i++;
+    }
+    qsort((void *)copy,movie -> size,sizeof(char *), compare);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+      if(strcmp(*(copy+check),save_movie -> next_movie -> actor -> data)==0){
+        print_movie = save_movie -> next_movie;
+        saving = print_movie -> actor;
+        fprintf(file,"%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+        while(print_movie -> actor -> next != NULL){
+          fprintf(file,"%s:",print_movie -> actor -> data);
+          print_movie -> actor = print_movie -> actor -> next;
+        }
+        fprintf(file,"%s\n",print_movie -> actor -> data);
+        print_movie -> actor = saving;
+        save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+      save_movie = movie -> head;
+      break;
+    }
+    save_movie = save_movie -> next_movie;
+    }
+    }
+  fclose(file);
+  }
+  else if(option == 'y'){
+    while(save_movie -> next_movie != movie -> tail){
+    	save_movie = save_movie -> next_movie;
+    	*(num+i) = save_movie -> year;
+    	i++;
+    }
+    qsort(num,movie -> size,sizeof(int), compare_num);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+    	if(*(num+check) == save_movie -> next_movie -> year){
+    		print_movie = save_movie -> next_movie;
+    		saving = print_movie -> actor;
+    		fprintf(file,"%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+    		while(print_movie -> actor -> next != NULL){
+    			fprintf(file,"%s:",print_movie -> actor -> data);
+    			print_movie -> actor = print_movie -> actor -> next;
+    		}
+    		fprintf(file,"%s\n",print_movie -> actor -> data);
+    		print_movie -> actor = saving;
+    		save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+    	save_movie = movie -> head;
+    	break;
+    }
+    save_movie = save_movie -> next_movie;
+    }
+    }
+    fclose(file);
+  }
+  else if(option == 'r'){
+    while(save_movie -> next_movie != movie -> tail){
+    	save_movie = save_movie -> next_movie;
+    	*(num+i) = save_movie -> time;
+    	i++;
+    }
+    qsort(num,movie -> size,sizeof(int), compare_num);
+    save_movie = movie -> head;
+    for(check=0;check<movie -> size;check++){
+    while(save_movie -> next_movie != movie -> tail){
+    	if(*(num+check) == save_movie -> next_movie -> time){
+    		print_movie = save_movie -> next_movie;
+    		saving = print_movie -> actor;
+    		fprintf(file,"%s:%s:%s:%d:%d:",print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+    		while(print_movie -> actor -> next != NULL){
+    			fprintf(file,"%s:",print_movie -> actor -> data);
+    			print_movie -> actor = print_movie -> actor -> next;
+    		}
+    		fprintf(file,"%s\n",print_movie -> actor -> data);
+    		print_movie -> actor = saving;
+    		save_movie -> next_movie = save_movie -> next_movie -> next_movie;
+    	save_movie = movie -> head;
+    	break;
+    }
+    save_movie = save_movie -> next_movie;
+    }
+    }
+    fclose(file);
+  }
+}
+else if(tag == 'd'){
+  if(option == 'n'){
+    while(save_director -> next_director != director -> tail){
+    	save_director = save_director -> next_director;
+    	*(copy+i) = (char *)calloc(1024,sizeof(char));
+    	*(copy+i) = save_director -> name;
+    	i++;
+    }
+    qsort((void *)copy,director -> size,sizeof(char *), compare);
+    save_director = director -> head;
+    for(check=0;check<director -> size;check++){
+    while(save_director -> next_director != director -> tail){
+    	if(strcmp(*(copy+check),save_director -> next_director -> name)==0){
+    		print_director = save_director -> next_director;
+    		saving = print_director -> title;
+    		fprintf(file,"%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+        while(print_director -> title -> next != NULL){
+          fprintf(file,"%s,",print_director -> title -> data);
+    			print_director -> title = print_director -> title -> next;
+    		}
+    		fprintf(file,"%s\n",print_director -> title -> data);
+    		print_director -> title = saving;
+    		save_director -> next_director = save_director -> next_director -> next_director;
+    	save_director = director -> head;
+    	break;
+    }
+    save_director = save_director -> next_director;
+    }
+    }
+    fclose(file);
+  }
+else if(option == 's'){
+  while(save_director -> next_director != director -> tail){
+    save_director = save_director -> next_director;
+    *(check_sex+i) = save_director -> sex;
+    i++;
+  }
+qsort((void *)check_sex,director -> size,sizeof(char ), compare_w);
+  save_director = director -> head;
+  for(check=0;check<director -> size;check++){
+  while(save_director -> next_director != director -> tail){
+    if(*(check_sex+check)==save_director -> next_director -> sex){
+      print_director = save_director -> next_director;
+      saving = print_director -> title;
+      fprintf(file,"%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+      while(print_director -> title -> next != NULL){
+        fprintf(file,"%s,",print_director -> title -> data);
+        print_director -> title = print_director -> title -> next;
+      }
+      fprintf(file,"%s\n",print_director -> title -> data);
+      print_director -> title = saving;
+      save_director -> next_director = save_director -> next_director -> next_director;
+    save_director = director -> head;
+    break;
+  }
+  save_director = save_director -> next_director;
+  }
+  }
+  fclose(file);
+}
+else if(option == 'b'){
+  while(save_director -> next_director != director -> tail){
+  	save_director = save_director -> next_director;
+  	*(num+i) = save_director -> birth;
+  	i++;
+  }
+  qsort(num,director -> size,sizeof(int), compare_num);
+  save_director = director -> head;
+  for(check=0;check<director -> size;check++){
+  while(save_director -> next_director != director -> tail){
+  	if(*(num+check) == save_director -> next_director -> birth){
+      print_director = save_director -> next_director;
+      saving = print_director -> title;
+      fprintf(file,"%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+      while(print_director -> title -> next != NULL){
+        fprintf(file,"%s,",print_director -> title -> data);
+        print_director -> title = print_director -> title -> next;
+      }
+      fprintf(file,"%s\n",print_director -> title -> data);
+      print_director -> title = saving;
+      save_director -> next_director = save_director -> next_director -> next_director;
+    save_director = director -> head;
+    break;
+  }
+  save_director = save_director -> next_director;
+  }
+}
+fclose(file);
+}
+else if(option == 'm'){
+  while(save_director -> next_director != director -> tail){
+    save_director = save_director -> next_director;
+    *(copy+i) = (char *)calloc(1024,sizeof(char));
+    *(copy+i) = save_director -> title -> data;
+    i++;
+  }
+  qsort((void *)copy,director -> size,sizeof(char *), compare);
+  save_director = director -> head;
+  for(check=0;check<director -> size;check++){
+  while(save_director -> next_director != director -> tail){
+    if(strcmp(*(copy+check),save_director -> next_director -> title -> data)==0){
+      print_director = save_director -> next_director;
+      saving = print_director -> title;
+      fprintf(file,"%s:%c:%d:",print_director -> name,print_director -> sex,print_director -> birth);
+      while(print_director -> title -> next != NULL){
+        fprintf(file,"%s,",print_director -> title -> data);
+        print_director -> title = print_director -> title -> next;
+      }
+      fprintf(file,"%s\n",print_director -> title -> data);
+      print_director -> title = saving;
+      save_director -> next_director = save_director -> next_director -> next_director;
+    save_director = director -> head;
+    break;
+  }
+  save_director = save_director -> next_director;
+  }
+  }
+  fclose(file);
+}
+}
+else if(tag == 'a'){
+  if(option == 'n'){
+		while(save_actor -> next_actor != actor -> tail){
+      save_actor = save_actor -> next_actor;
+      *(copy+i) = (char *)calloc(1024,sizeof(char));
+      *(copy+i) = save_actor -> name;
+      i++;
+    }
+    qsort((void *)copy,actor -> size,sizeof(char *), compare);
+    save_actor = actor -> head;
+    for(check=0;check<actor -> size;check++){
+    while(save_actor -> next_actor != actor -> tail){
+      if(strcmp(*(copy+check),save_actor -> next_actor -> name)==0){
+        print_actor = save_actor -> next_actor;
+        saving = print_actor -> title;
+        fprintf(file,"%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+        while(print_actor -> title -> next != NULL){
+          fprintf(file,"%s,",print_actor -> title -> data);
+          print_actor -> title = print_actor -> title -> next;
+        }
+        fprintf(file,"%s\n",print_actor -> title -> data);
+        print_actor -> title = saving;
+        save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+      save_actor = actor -> head;
+      break;
+    }
+    save_actor = save_actor -> next_actor;
+    }
+    }
+		fclose(file);
+  }
+else if(option == 's'){
+  while(save_actor -> next_actor != actor -> tail){
+    save_actor = save_actor -> next_actor;
+    *(check_sex+i) = save_actor -> sex;
+    i++;
+  }
+qsort((void *)check_sex,actor -> size,sizeof(char ), compare_w);
+  save_actor = actor -> head;
+  for(check=0;check<actor -> size;check++){
+  while(save_actor -> next_actor != actor -> tail){
+    if(*(check_sex+check)==save_actor -> next_actor -> sex){
+      print_actor = save_actor -> next_actor;
+      saving = print_actor -> title;
+      fprintf(file,"%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+      while(print_actor -> title -> next != NULL){
+        fprintf(file,"%s,",print_actor -> title -> data);
+        print_actor -> title = print_actor -> title -> next;
+      }
+      fprintf(file,"%s\n",print_actor -> title -> data);
+      print_actor -> title = saving;
+      save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+    save_actor = actor -> head;
+    break;
+  }
+  save_actor = save_actor -> next_actor;
+  }
+  }
+	fclose(file);
+}
+else if(option == 'b'){
+  while(save_actor -> next_actor != actor -> tail){
+  	save_actor = save_actor -> next_actor;
+  	*(num+i) = save_actor -> birth;
+  	i++;
+  }
+  qsort(num,actor -> size,sizeof(int), compare_num);
+  save_actor = actor -> head;
+  for(check=0;check<actor -> size;check++){
+  while(save_actor -> next_actor != actor -> tail){
+  	if(*(num+check) == save_actor -> next_actor -> birth){
+      print_actor = save_actor -> next_actor;
+      saving = print_actor -> title;
+      fprintf(file,"%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+      while(print_actor -> title -> next != NULL){
+        fprintf(file,"%s,",print_actor -> title -> data);
+        print_actor -> title = print_actor -> title -> next;
+      }
+      fprintf(file,"%s\n",print_actor -> title -> data);
+      print_actor -> title = saving;
+      save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+    save_actor = actor -> head;
+    break;
+  }
+  save_actor = save_actor -> next_actor;
+  }
+}
+fclose(file);
+}
+else if(option == 'm'){
+  while(save_actor -> next_actor != actor -> tail){
+    save_actor = save_actor -> next_actor;
+    *(copy+i) = (char *)calloc(1024,sizeof(char));
+    *(copy+i) = save_actor -> title -> data;
+    i++;
+  }
+  qsort((void *)copy,actor -> size,sizeof(char *), compare);
+  save_actor = actor -> head;
+  for(check=0;check<actor -> size;check++){
+  while(save_actor -> next_actor != actor -> tail){
+    if(strcmp(*(copy+check),save_actor -> next_actor -> title -> data)==0){
+      print_actor = save_actor -> next_actor;
+      saving = print_actor -> title;
+      fprintf(file,"%s:%c:%d:",print_actor -> name,print_actor -> sex,print_actor -> birth);
+      while(print_actor -> title -> next != NULL){
+        fprintf(file,"%s,",print_actor -> title -> data);
+        print_actor -> title = print_actor -> title -> next;
+      }
+      fprintf(file,"%s\n",print_actor -> title -> data);
+      print_actor -> title = saving;
+      save_actor -> next_actor = save_actor -> next_actor -> next_actor;
+    save_actor = actor -> head;
+    break;
+  }
+  save_actor = save_actor -> next_actor;
+  }
+  }
+	fclose(file);
+}
+}
 }
 void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   //명령어를 입력받아서 그에 해당하는 함수를 출력하기 위해 선언한 변수
@@ -1173,8 +1875,38 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   else if(strcmp(command,"sort")==0){//파일의 내용을 정렬하여서 출력함
     scanf("%*c%c",&input_text);
     scanf("%*c%c",&option);
+    char check = getchar();
+    if(check == '\n'){
     sorting(movie,actor,director,input_text,option);
-    getchar();
+    free(movie);
+    free(director);
+    free(actor);
+    make_movie_admin(&movie);
+    make_actor_admin(&actor);
+    make_director_admin(&director);
+    scan_movie_log(movie);
+    scan_actor_log(actor);
+    scan_director_log(director);
+    compare_movie_word(movie,director,actor);
+    compare_actor_word(movie,actor);
+    compare_director_word(movie,director);
+  }
+    else if(check ==' '){
+      char checking;
+      scanf("%*c%c",&checking);
+      getchar();
+      sorting_file(movie,actor,director,input_text,option);
+      make_movie_admin(&movie);
+      make_actor_admin(&actor);
+      make_director_admin(&director);
+      scan_movie_log(movie);
+      scan_actor_log(actor);
+      scan_director_log(director);
+      compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
+      printf("%c",checking);
+    }
   }
   else if(strcmp(command,"print")==0){//파일의 내용을 출력함
     scanf("%*c%c%*c",&input_text);
@@ -1319,7 +2051,7 @@ int copy_movie_list(){
             com_word -> com_word = com_actor;
           }
         }
-                  com_actor = actor -> head;
+              com_actor = actor -> head;
               while(com_word -> next != NULL){
           last_word = com_word -> next;
           com_actor = actor -> head;
