@@ -85,6 +85,7 @@ void input_multiple(LINK_M *movie);
 void add_movie(ALL_M *movie);
 int copy_movie_list();
 int copy_actor_list();
+int copy_director_list();
 void compare_movie_word(ALL_M *movie,ALL_D *director,ALL_A *actor);
 void compare_actor_word(ALL_M *movie,ALL_A *actor);
 void compare_director_word(ALL_M *movie,ALL_D *director);
@@ -333,27 +334,6 @@ else if(tag == 'd'){
   fclose(file);
 }
 }
-void make_movie_list_file(ALL_M *movie){
-  FILE *mv_list;
-  mv_list = fopen("movie_list","w");
-  LINK_W *print_word;
-  LINK_M *save_movie;
-  int i;
-  save_movie = movie -> head;
-  print_word = (LINK_W *)malloc(sizeof(LINK_W));
-    while(save_movie -> next_movie != movie -> tail){
-    save_movie = save_movie -> next_movie;
-    fprintf(mv_list,"%d:%s:%s:%s:%d:%d:",save_movie -> serial_num,save_movie -> title,save_movie -> genre,save_movie -> director -> data,save_movie -> year,save_movie -> time);
-    print_word = save_movie -> actor;
-    while(print_word -> next != NULL){
-  		fprintf(mv_list,"%s,",print_word->data);
-  		print_word = print_word->next;
-  	}
-  	fprintf(mv_list,"%s\n", print_word->data);
-    i++;
-  }
-  fclose(mv_list);
-  }
 void input_multiple(LINK_M *movie){
 	movie -> actor = (LINK_W *)malloc(sizeof(LINK_W));
 	LINK_W *tmp;
@@ -390,12 +370,12 @@ void print_multiple_data_log_to_list(FILE *mv_l, LINK_M *movie){
 }
 void add_movie(ALL_M *movie){
   FILE *mv_l,*mv_s;
-  LINK_W *save_word,*last_word;
-  LINK_M *save_movie,*new_movie;
-  char *input_data, input_text,read_text;
+  LINK_W *save_word,*check_word;
+  LINK_M *save_movie,*new_movie,*check;
+  char *input_data, input_text,read_text,checking;
   int input_num,i,serial = 1;
   save_movie = (LINK_M *)malloc(sizeof(LINK_M));
-  mv_l=fopen("movie_log","a");
+  check = movie -> head;
   input_data=(char *)malloc(sizeof(char)*30);
  mv_s = fopen("movie_log","r");
  if(mv_s == NULL)
@@ -417,35 +397,57 @@ void add_movie(ALL_M *movie){
  fclose(mv_s);
 }
   save_movie -> serial_num = serial;
-  fprintf(mv_l,"add:%d:",save_movie -> serial_num);
   save_movie -> actor = (LINK_W *)malloc(sizeof(LINK_W));
   printf("title >");
   scanf("%[^\n]%*c",input_data);
   save_movie -> title = (char *)malloc(strlen(input_data)+1);
   strcpy(save_movie -> title, input_data);
-  fprintf(mv_l,"%s:",save_movie ->title);
   printf("genre >");
   scanf("%[^\n]%*c",input_data);
   save_movie -> genre = (char *)malloc(strlen(input_data)+1);
   strcpy(save_movie -> genre, input_data);
-  fprintf(mv_l,"%s:",save_movie ->genre);
   printf("director >");
   save_movie -> director = (DIR *)malloc(sizeof(DIR));
   scanf("%[^\n]%*c",input_data);
   save_movie -> director -> data = (char *)malloc(strlen(input_data)+1);
   strcpy(save_movie -> director -> data, input_data);
-  fprintf(mv_l,"%s:",save_movie -> director -> data);
   printf("year >");
   scanf("%d",&input_num);
   save_movie -> year = input_num;
-  fprintf(mv_l,"%4d:",save_movie -> year);
   printf("time >");
   scanf("%d%*c",&input_num);
   save_movie -> time = input_num;
-  fprintf(mv_l,"%3d:",save_movie -> time);
   new_movie = movie -> head;
   printf("actor >");
   input_multiple(save_movie);
+  while(check -> next_movie != movie -> tail){
+    check = check -> next_movie;
+    if(strcmp(check -> title,save_movie -> title)==0){
+      printf("@@ You have the same record in movie list\n");
+      printf("%d:%s:%s:%s:",check -> serial_num, check -> title,check -> genre,check -> director -> data);
+      printf("%d:%d:",check -> year,check -> time);
+      check_word = check -> actor;
+      while(check_word -> next != NULL){
+        printf("%s,",check_word -> data);
+        check_word = check_word -> next;
+      }
+      printf("%s\n",check_word -> data);
+      printf("Do You want to add any way?(Y/N)");
+      scanf("%c%*c",&checking);
+      break;
+    }
+  }
+  if(checking == 'N'||checking == 'n'){
+    free(input_data);
+  }
+  else{
+    mv_l=fopen("movie_log","a");
+  fprintf(mv_l,"add:%d:",save_movie -> serial_num);
+  fprintf(mv_l,"%s:",save_movie ->title);
+  fprintf(mv_l,"%s:",save_movie ->genre);
+  fprintf(mv_l,"%s:",save_movie -> director -> data);
+  fprintf(mv_l,"%4d:",save_movie -> year);
+  fprintf(mv_l,"%3d:",save_movie -> time);
   print_multiple_data_log_to_list(mv_l,save_movie);
   while(new_movie -> next_movie != movie -> tail){
   new_movie = new_movie -> next_movie;
@@ -455,6 +457,7 @@ void add_movie(ALL_M *movie){
   free(input_data);
   movie -> size++;
   fclose(mv_l);
+}
 }
 int delete_movie(ALL_M *movie,int serial){
   LINK_M *pre_movie, *del_movie;
@@ -664,22 +667,21 @@ void print_multiple_data_log_to_list_act(FILE *act_l, LINK_A *actor){
 
 void add_actor(ALL_A *actor){
   FILE *act_l,*act_s;
-  LINK_W *save_word,*last_word;
-  LINK_A *save_actor,*new_actor;
-  char *input_data, input_text,read_text;
+  LINK_W *save_word,*check_word;
+  LINK_A *save_actor,*new_actor,*check;
+  char *input_data, input_text,read_text,checking;
   int input_num,i,serial = 1;
   save_actor = (LINK_A *)malloc(sizeof(LINK_A));
-  new_actor = (LINK_A *)malloc(sizeof(LINK_A));
-  act_l=fopen("actor_log","a");
+  check = actor -> head;
   input_data=(char *)malloc(sizeof(char)*30);
- act_s = fopen("actor_log","r");
- if(act_s == NULL)
- serial = 1;
- else{
- fscanf(act_s,"%c",&read_text);
- if(read_text == 'a')
+  act_s = fopen("actor_log","r");
+  if(act_s == NULL)
+  serial = 1;
+  else{
+  fscanf(act_s,"%c",&read_text);
+  if(read_text == 'a')
    serial++;
- while(read_text!=EOF){
+  while(read_text!=EOF){
      fscanf(act_s,"%c",&read_text);
      if(read_text == '\n'){
        fscanf(act_s,"%c",&read_text);
@@ -688,26 +690,47 @@ void add_actor(ALL_A *actor){
          else if(read_text != 'u' && read_text != 'd')
          break;
          }
- }
- fclose(act_s);
-}
+  }
+  fclose(act_s);
+  }
   save_actor -> serial_num = serial;
-  fprintf(act_l,"add:%d:",save_actor -> serial_num);
   printf("name >");
   scanf("%[^\n]%*c",input_data);
   save_actor -> name = (char *)malloc(strlen(input_data)+1);
   strcpy(save_actor -> name, input_data);
-  fprintf(act_l,"%s:",save_actor ->name);
   printf("sex >");
   scanf("%c%*c",&input_text);
   save_actor -> sex = input_text;
-  fprintf(act_l,"%c:",save_actor ->sex);
   printf("birth >");
   scanf("%d%*c",&input_num);
   save_actor -> birth = input_num;
-  fprintf(act_l,"%8d:",save_actor -> birth);
   printf("best_movies >");
   input_multiple_act(save_actor);
+  while(check -> next_actor != actor -> tail){
+    check = check -> next_actor;
+    if(strcmp(check -> name,save_actor -> name)==0){
+      printf("@@ You have the same record in actor list\n");
+      printf("%d:%s:%c:%d:",check -> serial_num,check -> name,check -> sex, check -> birth);
+      check_word = check -> title;
+      while(check_word -> next != NULL){
+        printf("%s,",check_word -> data);
+        check_word = check_word -> next;
+      }
+      printf("%s\n",check_word -> data);
+      printf("Do You want to add any way?(Y/N)");
+      scanf("%c%*c",&checking);
+      break;
+    }
+  }
+  if(checking == 'N'||checking == 'n'){
+    free(input_data);
+  }
+  else{
+    act_l=fopen("actor_log","a");
+  fprintf(act_l,"add:%d:",save_actor -> serial_num);
+  fprintf(act_l,"%s:",save_actor ->name);
+  fprintf(act_l,"%c:",save_actor ->sex);
+  fprintf(act_l,"%8d:",save_actor -> birth);
   print_multiple_data_log_to_list_act(act_l,save_actor);
   new_actor = actor -> head;
   while(new_actor -> next_actor != actor -> tail)
@@ -717,6 +740,7 @@ void add_actor(ALL_A *actor){
   free(input_data);
   actor -> size ++;
   fclose(act_l);
+  }
 }
 int delete_actor(ALL_A *actor,int serial){
   LINK_A *pre_actor, *del_actor;
@@ -913,22 +937,21 @@ void print_multiple_data_log_to_list_dir(FILE *dir_l, LINK_D *director){
 
 void add_director(ALL_D *director){
   FILE *dir_l,*dir_s;
-  LINK_W *save_word,*last_word;
-  LINK_D *save_director,*new_director;
-  char *input_data, input_text,read_text;
+  LINK_W *save_word,*check_word;
+  LINK_D *save_director,*new_director,*check;
+  char *input_data, input_text,read_text,checking;
   int input_num,i,serial = 1;
-  save_director = (LINK_D *)malloc(sizeof(LINK_D));
-  new_director = (LINK_D *)malloc(sizeof(LINK_D));
-  dir_l=fopen("director_log","a");
+  save_director = (LINK_D *)malloc(sizeof(LINK_A));
+  check = director -> head;
   input_data=(char *)malloc(sizeof(char)*30);
- dir_s = fopen("director_log","r");
- if(dir_s == NULL)
- serial = 1;
- else{
- fscanf(dir_s,"%c",&read_text);
- if(read_text == 'a')
+  dir_s = fopen("director_log","r");
+  if(dir_s == NULL)
+  serial = 1;
+  else{
+  fscanf(dir_s,"%c",&read_text);
+  if(read_text == 'a')
    serial++;
- while(read_text!=EOF){
+  while(read_text!=EOF){
      fscanf(dir_s,"%c",&read_text);
      if(read_text == '\n'){
        fscanf(dir_s,"%c",&read_text);
@@ -937,35 +960,58 @@ void add_director(ALL_D *director){
          else if(read_text != 'u' && read_text != 'd')
          break;
          }
- }
- fclose(dir_s);
-}
+  }
+  fclose(dir_s);
+  }
   save_director -> serial_num = serial;
-  fprintf(dir_l,"add:%d:",save_director -> serial_num);
+
   printf("name >");
   scanf("%[^\n]%*c",input_data);
   save_director -> name = (char *)malloc(strlen(input_data)+1);
   strcpy(save_director -> name, input_data);
-  fprintf(dir_l,"%s:",save_director ->name);
   printf("sex >");
   scanf("%c%*c",&input_text);
   save_director -> sex = input_text;
-  fprintf(dir_l,"%c:",save_director ->sex);
   printf("birth >");
   scanf("%d%*c",&input_num);
   save_director -> birth = input_num;
-  fprintf(dir_l,"%8d:",save_director -> birth);
   printf("best_movies >");
   input_multiple_dir(save_director);
+  while(check -> next_director != director -> tail){
+    check = check -> next_director;
+    if(strcmp(check -> name,save_director -> name)==0){
+      printf("@@ You have the same record in director list\n");
+      printf("%d:%s:%c:%d:",check -> serial_num,check -> name,check -> sex, check -> birth);
+      check_word = check -> title;
+      while(check_word -> next != NULL){
+        printf("%s,",check_word -> data);
+        check_word = check_word -> next;
+      }
+      printf("%s\n",check_word -> data);
+      printf("Do You want to add any way?(Y/N)");
+      scanf("%c%*c",&checking);
+      break;
+    }
+  }
+  if(checking == 'N'||checking == 'n'){
+    free(input_data);
+  }
+  else{
+    dir_l=fopen("director_log","a");
+  fprintf(dir_l,"add:%d:",save_director -> serial_num);
+  fprintf(dir_l,"%s:",save_director ->name);
+  fprintf(dir_l,"%c:",save_director ->sex);
+  fprintf(dir_l,"%8d:",save_director -> birth);
   print_multiple_data_log_to_list_dir(dir_l,save_director);
   new_director = director -> head;
   while(new_director -> next_director != director -> tail)
   new_director = new_director -> next_director;
   new_director -> next_director = save_director;
   save_director -> next_director = director -> tail;
-  director -> size ++;
   free(input_data);
+  director -> size ++;
   fclose(dir_l);
+  }
 }
 int delete_director(ALL_D *director,int serial){
   LINK_D *pre_director, *del_director;
@@ -2013,14 +2059,23 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
     scanf("%*c%c%*c",&input_text);//'\n'을 무시하고 명령어를 입력받음
     if(input_text=='d'){//director에 내용을 추가함
       add_director(director);
+      compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
     printf("@@done\n");
   }
     else if(input_text=='m'){//movie에 내용을 추가함
       add_movie(movie);
+      compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
     printf("@@done\n");
   }
     else if(input_text=='a'){//actor에 내용을 추가함
       add_actor(actor);
+      compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
     printf("@@done\n");
   }
     }
@@ -2041,18 +2096,27 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
     if(input_text == 'm'){
       scanf("%d",&input_num);
       i=delete_movie(movie,input_num);
+      compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
       if(i!=1)
       printf("No such record\n");
     }
     else if(input_text == 'a'){
       scanf("%d",&input_num);
       i=delete_actor(actor,input_num);
+      compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
       if(i!=1)
       printf("No such record\n");
   }
   else if(input_text == 'd'){
     scanf("%d",&input_num);
     i=delete_director(director,input_num);
+    compare_movie_word(movie,director,actor);
+    compare_actor_word(movie,actor);
+    compare_director_word(movie,director);
     if(i!=1)
     printf("No such record\n");
   }
@@ -2139,7 +2203,9 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   }
   else if(strcmp(command,"end")==0){//프로그램의 실행을 멈춘다
     //파일의 내용을 저장할 필요가 있으면 저장도 해주면 좋다
-    make_movie_list_file(movie);
+    char tag;
+    tag = 'm';
+    save(movie,actor,director,tag);
     break;
   }
   }
@@ -2220,6 +2286,41 @@ int copy_movie_list(){
     free(line);
     free(filename);
     }
+    int copy_director_list(){
+        FILE *f1, *f2;
+        char *line;
+        char c;
+        struct tm *t;
+        time_t now;
+        now = time(NULL);
+        t = localtime(&now);
+        int y, m1, d, h, m2, s;
+        char *filename;
+        line = (char *)calloc(1024,sizeof(char));
+        filename = (char *)calloc(1024,sizeof(char));
+      f1 = fopen("director_list", "r");
+      f2 = fopen("director_list", "a");
+      y = t -> tm_year+1900;
+      m1 = t -> tm_mon;
+      d = t -> tm_mday;
+      h = t -> tm_hour;
+      m2 = t -> tm_min;
+      s = t -> tm_sec;
+      sprintf(filename, "director_list%d%d%d%d%d%d", t -> tm_year+1900, t -> tm_mon, t -> tm_mday, t -> tm_hour, t -> tm_min, t -> tm_sec);
+      //파일열기
+      f2 = fopen(filename, "w");
+
+      //파일 한라인씩 읽고 복사 fgets 교과서에 나와있는데 프로젝트에 사용가능한지 모름
+      while(fgets(line, len -1, f1))
+      {
+        fputs(line, f2);
+      }
+      fclose(f1);
+      fclose(f2);
+      free(line);
+      free(filename);
+      }
+
     void compare_movie_word(ALL_M *movie,ALL_D *director,ALL_A *actor){
       LINK_M *com_movie,*link_movie;
       LINK_A *com_actor,*link_actor;
@@ -2288,6 +2389,7 @@ int copy_movie_list(){
         com_movie = movie -> head;
         while(com_word -> next != NULL){
           last_word = com_word -> next;
+          com_movie = movie -> head;
           while(com_movie -> next_movie != movie -> tail){
             com_movie = com_movie -> next_movie;
             if(strcmp(com_word -> data,com_movie -> title)==0){
@@ -2297,7 +2399,6 @@ int copy_movie_list(){
               last_word -> com_word = com_movie;
             }
           }
-          com_movie = movie -> head;
           com_word = com_word -> next;
         }
       }
@@ -2320,6 +2421,7 @@ int copy_movie_list(){
         com_movie = movie -> head;
         while(com_word -> next != NULL){
           last = com_word -> next;
+          com_movie = movie -> head;
           while(com_movie -> next_movie != movie -> tail){
             com_movie = com_movie -> next_movie;
             if(strcmp(com_word -> data,com_movie -> title)==0){
@@ -2329,7 +2431,6 @@ int copy_movie_list(){
               last -> com_word = com_movie;
             }
           }
-          com_movie = movie -> head;
           com_word = com_word -> next;
         }
       }
