@@ -92,6 +92,32 @@ void compare_director_word(ALL_M *movie,ALL_D *director);
 int compare(const void *, const void *);
 int compare_num(const void *, const void *);
 void compare_movie(ALL_M *movie,ALL_A *actor);
+char *change(char *s, const char *a, const char *b);
+char *change(char *s, const char *a, const char *b) {
+  char *result, *sr;
+  size_t i, count = 0;
+  size_t a_length = strlen(a);
+	if (a_length < 1) return s;
+  size_t b_length = strlen(b);
+  if (b_length != a_length) {
+    for (i = 0; *(s+i) != '\0';) {
+      if (memcmp((s+i), a, a_length) == 0) count++, i += a_length;
+      else i++;
+    }
+  } else i = strlen(s);
+  result = (char *) malloc(i + 1 + count * (b_length - a_length));
+  if (result == NULL) return NULL;
+  sr = result;
+  while (*s) {
+    if (memcmp(s, a, a_length) == 0) {
+      memcpy(sr, b, b_length);
+      sr += b_length;
+      s  += a_length;
+    } else *sr++ = *s++;
+  }
+  *sr = '\0';
+  return result;
+}
 int compare(const void *a, const void *b){
   return(strcmp(*(char**)a,*(char**)b));
 }
@@ -121,16 +147,16 @@ void make_movie_admin(ALL_M **movie){
 }
 void make_actor_admin(ALL_A **actor){
   *actor = (ALL_A *)malloc(sizeof(ALL_A));
-  (*actor) -> head = (LINK_A *)malloc(sizeof(LINK_A));
-  (*actor) -> tail = (LINK_A *)malloc(sizeof(LINK_A));
+  (*actor) -> head = (LINK_A *)calloc(1,sizeof(LINK_A));
+  (*actor) -> tail = (LINK_A *)calloc(1,sizeof(LINK_A));
   (*actor) -> head -> next_actor = (*actor) -> tail;
   (*actor) -> tail -> next_actor = (*actor) -> tail;
   (*actor) -> size = 0;
 }
 void make_director_admin(ALL_D **director){
   *director = (ALL_D *)malloc(sizeof(ALL_D));
-  (*director) -> head = (LINK_D *)malloc(sizeof(LINK_D));
-  (*director) -> tail = (LINK_D *)malloc(sizeof(LINK_D));
+  (*director) -> head = (LINK_D *)calloc(1,sizeof(LINK_D));
+  (*director) -> tail = (LINK_D *)calloc(1,sizeof(LINK_D));
   (*director) -> head -> next_director = (*director) -> tail;
   (*director) -> tail -> next_director = (*director) -> tail;
   (*director) -> size = 0;
@@ -201,6 +227,8 @@ file = fopen(filename,"w");
   }
 }
 fclose(file);
+free(option1);
+free(check_option);
   }
   else if(tag == 'd'){
     for(int i=0; i<check; i++){
@@ -239,6 +267,8 @@ fclose(file);
    fprintf(file,"Movie %d :%s\n",i,save_word -> data);
      }
    }
+	 free(option1);
+	 free(check_option);
    fclose(file);
   }
   else if(tag == 'a'){
@@ -278,6 +308,8 @@ fclose(file);
    fprintf(file,"Movie %d :%s\n",i,save_word -> data);
      }
    }
+	 free(option1);
+	 free(check_option);
    fclose(file);
   }
 }
@@ -361,18 +393,23 @@ void input_multiple(LINK_M *movie){
 }
 void print_multiple_data_log_to_list(FILE *mv_l, LINK_M *movie){
 	LINK_W *tmp;
+	char *checking_colon;
 	tmp = movie -> actor;
 	while(tmp->next != NULL){
-		fprintf(mv_l,"%s,",tmp->data);
+		checking_colon = change(tmp -> data,":","??;");
+		fprintf(mv_l,"%s,",checking_colon);
+		printf("%s,",checking_colon);
 		tmp = tmp->next;
 	}
-	fprintf(mv_l, "%s\n", tmp->data);
+	checking_colon = change(tmp -> data,":","??;");
+	fprintf(mv_l, "%s\n", checking_colon);
+	printf("%s\n",checking_colon);
 }
 void add_movie(ALL_M *movie){
   FILE *mv_l,*mv_s;
   LINK_W *save_word,*check_word;
   LINK_M *save_movie,*new_movie,*check;
-  char *input_data, input_text,read_text,checking;
+  char *input_data, input_text,read_text,checking,*checking_colon;
   int input_num,i,serial = 1;
   save_movie = (LINK_M *)malloc(sizeof(LINK_M));
   check = movie -> head;
@@ -439,13 +476,17 @@ void add_movie(ALL_M *movie){
   }
   if(checking == 'N'||checking == 'n'){
     free(input_data);
+		free(save_movie);
   }
   else{
     mv_l=fopen("movie_log","a");
   fprintf(mv_l,"add:%d:",save_movie -> serial_num);
-  fprintf(mv_l,"%s:",save_movie ->title);
-  fprintf(mv_l,"%s:",save_movie ->genre);
-  fprintf(mv_l,"%s:",save_movie -> director -> data);
+	checking_colon = change(save_movie -> title,":","??;");
+  fprintf(mv_l,"%s:",checking_colon);
+	checking_colon = change(save_movie -> genre,":","??;");
+  fprintf(mv_l,"%s:",checking_colon);
+	checking_colon = change(save_movie -> director -> data,":","??;");
+  fprintf(mv_l,"%s:",checking_colon);
   fprintf(mv_l,"%4d:",save_movie -> year);
   fprintf(mv_l,"%3d:",save_movie -> time);
   print_multiple_data_log_to_list(mv_l,save_movie);
@@ -471,6 +512,7 @@ int delete_movie(ALL_M *movie,int serial){
       mv_d = fopen("movie_log","a");
       fprintf(mv_d,"delete:%d::::::\n", serial);
       fclose(mv_d);
+			free(pre_movie -> actor);
       free(pre_movie);
       movie -> size--;
       return 1;
@@ -495,20 +537,21 @@ int add_movie_list(ALL_M *movie,FILE *mv_l){
   new_movie -> serial_num = read_num;
   fscanf(mv_l,"%*c%[^:]",read_data);
   new_movie -> title = (char *)malloc(strlen(read_data));
-  strcpy(new_movie -> title, read_data);
+	new_movie -> title = change(read_data,"??;",":");
   fscanf(mv_l,"%*c%[^:]",read_data);
   new_movie -> genre = (char *)malloc(strlen(read_data));
-  strcpy(new_movie -> genre, read_data);
+  new_movie -> genre = change(read_data,"??;",":");
   fscanf(mv_l,"%*c%[^:]",read_data);
   new_movie -> director = (DIR *)malloc(sizeof(DIR));
   new_movie -> director -> data = (char *)malloc(strlen(read_data));
-  strcpy(new_movie -> director -> data, read_data);
+  new_movie -> director -> data = change(read_data,"??;",":");
   fscanf(mv_l,"%*c%d",&read_num);
   new_movie -> year = read_num;
   fscanf(mv_l,"%*c%d%*c",&read_num);
   new_movie -> time = read_num;
   fscanf(mv_l,"%[^\n]%*c",temp);
   tmp->data = strtok(temp, ",");
+	tmp->data = change(tmp -> data , "??;",":");
 	while(tmp->data != NULL){
 		char *check;
 		check=(char*)malloc(sizeof(char)*30);
@@ -521,7 +564,7 @@ int add_movie_list(ALL_M *movie,FILE *mv_l){
 			tmp->next = (LINK_W *)malloc(sizeof(LINK_W));
 			tmp = tmp->next;
 			tmp->next=NULL;
-			tmp->data = check;
+			tmp->data = change(check,"??;",":");
 		}
 	}
   link_movie = movie -> head;
@@ -549,6 +592,296 @@ int delete_movie_list(ALL_M *movie,FILE *mv_l){
   }
   return 0;
 }
+void change_num_to_string(char* str, int num){
+	int cnt=1;
+        int check = num;
+        while(check != check%10){
+                cnt++;
+                check = check/10;
+        }
+        for(int i=0; i<cnt; i++){
+                int div=1;
+                for(int j=0; j<cnt-i-1; j++)
+                        div *= 10;
+                int res = num/div;
+                char input = res+48;
+                *(str+i) = input;
+                num -= res*div;
+        }
+}
+
+void update_movie(ALL_M *movie, char *option, int serial){
+	FILE *mv_l;
+	mv_l = fopen("movie_log","a");
+	LINK_M *tmp = movie->head;
+	int state;
+	LINK_M *update,*checking;
+	while(tmp->next_movie != movie->tail){
+		tmp = tmp->next_movie;
+		if(tmp->serial_num == serial){
+			update = tmp;
+			break;
+		}
+	}
+	checking = movie -> head;
+	int check = strlen(option);
+	char *check_option = (char*)calloc(6, sizeof(char));
+	char *revise = (char*)malloc(sizeof(char)*2);
+	char *str;
+	str = (char*)calloc(30, sizeof(char));
+	int num;
+	for(int i=0; i<check; i++){
+		if(*(option+i) == 't') *(check_option+0) = 't';
+		if(*(option+i) == 'g') *(check_option+1) = 'g';
+		if(*(option+i) == 'd') *(check_option+2) = 'd';
+		if(*(option+i) == 'y') *(check_option+3) = 'y';
+		if(*(option+i) == 'r') *(check_option+4) = 'r';
+		if(*(option+i) == 'a') *(check_option+5) = 'a';
+	}
+	fprintf(mv_l, "update:%d:", serial);
+	if(*(check_option+0) == 't'){
+		state = 0;
+	       printf("title > ");
+	       scanf("%[^\n]", str);
+				  getchar();
+				 while(checking -> next_movie != movie -> tail){
+					 checking = checking -> next_movie;
+					 if((strcmp(str, checking->title))==0){
+						 printf("You have the same record.\n");
+						 printf("title : %s\n", checking->title);
+						 printf("Do you want to revise?(Y : yes, N: no)\n");
+						 scanf("%s", revise);
+						 getchar();
+						 if((strcmp(revise, "Y") == 0)) fprintf(mv_l, "%s:", checking->title);
+						 else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
+						 state = 1;
+						 break;
+					 }
+				 }
+	       if(state != 1) fprintf(mv_l, "%s:", str);
+	}
+	else if(*(check_option+0) == '\0') fprintf(mv_l, "=:");
+	if(*(check_option+1) == 'g'){
+		printf("genre > ");
+                scanf("%[^\n]", str);
+                getchar();
+								while(checking -> next_movie != movie -> tail){
+			 					 checking = checking -> next_movie;
+			 					 if((strcmp(str, checking->title))==0){
+			 						 printf("You have the same record.\n");
+			 						 printf("title : %s\n", checking->title);
+			 						 printf("Do you want to revise?(Y : yes, N: no)\n");
+			 						 scanf("%s", revise);
+			 						 getchar();
+			 						 if((strcmp(revise, "Y") == 0)) fprintf(mv_l, "%s:", checking->title);
+			 						 else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
+			 						 state = 1;
+			 						 break;
+			 					 }
+			 				 }
+			 	       if(state != 1) fprintf(mv_l, "%s:", str);
+	}
+	else if(*(check_option+1) == '\0') fprintf(mv_l, "=:");
+	if(*(check_option+2) == 'd'){
+		printf("director > ");
+                scanf("%[^\n]", str);
+                getchar();
+                if((strcmp(str, update->director->data))==0){
+			printf("You have the same record.\n");
+                        printf("director : %s\n", update->director->data);
+                        printf("Do you want to revise?(Y : yes, N: no)\n");
+                        scanf("%s", revise);
+			getchar();
+                        if(strcmp(revise, "Y")==0) fprintf(mv_l, "%s:", update->director->data);
+			else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
+		}
+                else fprintf(mv_l, "%s:", str);
+	}
+	else if(*(check_option+2) == '\0') fprintf(mv_l, "=:");
+	if(*(check_option+3) == 'y'){
+		printf("year > ");
+                scanf("%d", &num);
+		char *snum = (char*)calloc(2, sizeof(char));
+		change_num_to_string(snum, num);
+                if(update->year == num){
+			printf("You have the same record.\n");
+                        printf("year : %d\n", update->year);
+                        printf("Do you want to revise?(Y : yes, N: no)\n");
+                        scanf("%s", revise);
+			getchar();
+                        if(strcmp(revise, "Y")==0) fprintf(mv_l, "%d:", update->year);
+			else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
+		}
+                else fprintf(mv_l, "%d:", num);
+	}
+	else if(*(check_option+3) == '\0') fprintf(mv_l, "=:");
+	if(*(check_option+4) == 'r'){
+		printf("running time > ");
+                scanf("%d", &num);
+		char *snum = (char*)calloc(2, sizeof(char));
+		change_num_to_string(snum, num);
+                if(update->time == num){
+			printf("You have the same record.\n");
+                        printf("running time : %d\n", update->time);
+                        printf("Do you want to revise?(Y : yes, N: no)\n");
+                        scanf("%s", revise);
+			getchar();
+                        if(strcmp(revise, "Y")==0) fprintf(mv_l, "%d:", update->time);
+			else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
+		}
+                else fprintf(mv_l, "%d:", num);
+	}
+	else if(*(check_option+4) == '\0') fprintf(mv_l, "=:");
+        if(*(check_option+5) == 'a'){
+	       printf("actor > ");
+
+	       LINK_M *ttmp = (LINK_M*)malloc(sizeof(LINK_M));
+	       input_multiple(ttmp);
+
+	       int a=1, b=1;
+	       LINK_W *new;
+	       new = ttmp->actor;
+
+	       while(new ->next != NULL){
+		       a++;
+		      new = new->next;
+	       }
+	       new = ttmp->actor;
+	       LINK_W *org;
+	       org = update->actor;
+	       while(org->next != NULL){
+		       b++;
+		      org = org->next;
+	       }
+	       org = update->actor;
+	       if(a != b){
+		       while(new->next != NULL){
+			       fprintf(mv_l, "%s,", new->data);
+			       new = new->next;
+		       }
+		       fprintf(mv_l, "%s\n", new->data);
+	       }
+	       else{
+		       char *gar1 = (char*)calloc(200, sizeof(char));
+		       char *gar2 = (char*)calloc(200, sizeof(char));
+		       while(new->next != NULL){
+			       strcpy(gar1+strlen(gar1), new->data);
+			       strcat(gar1, ",");
+			       new = new->next;
+		       }
+		       strcat(gar1, new->data);
+		       while(org->next != NULL){
+			       strcpy(gar2+strlen(gar2), org->data);
+			       strcat(gar2, ",");
+			       org = org->next;
+		       }
+		       strcat(gar2, org->data);
+		       new = ttmp->actor;
+		       org = update->actor;
+		       if(strcmp(gar1, gar2)==0){
+			       printf("You have the same records.\n");
+			       printf("actors : %s\n", gar1);
+			       printf("Do you want to revise?(Y : yes, N : no)\n");
+			       scanf("%s", revise);
+			       getchar();
+			       if(strcmp(revise, "Y")==0){
+				       while(org->next != NULL){
+					       fprintf(mv_l, "%s,", org->data);
+					       org = org->next;
+				       }
+				       fprintf(mv_l, "%s\n", org->data);
+			       }
+			       else if(strcmp(revise, "N")==0) fprintf(mv_l, "=\n");
+		       }
+		       else{
+			       while(new->next != NULL){
+				       fprintf(mv_l, "%s,", new->data);
+				       new = new->next;
+			       }
+			       fprintf(mv_l, "%s\n", new->data);
+		       }
+	       }
+
+	}
+	else if(*(check_option+5) == '\0') fprintf(mv_l, "=\n");
+	fclose(mv_l);
+}
+
+void update_movie_list(ALL_M *movie,FILE *mv_l){
+	char *read_data = (char*)calloc(30, sizeof(char));
+	int read_num;
+	fscanf(mv_l, "%*c%d", &read_num);
+
+	LINK_M *tmp = (LINK_M*)malloc(sizeof(LINK_M));
+	tmp = movie->head;
+	LINK_M *update = (LINK_M*)malloc(sizeof(LINK_M));
+	while(tmp->next_movie != movie->tail){
+		tmp = tmp->next_movie;
+		if(tmp->serial_num == read_num){
+			update = tmp;
+			break;
+		}
+	}
+	update->serial_num = read_num;
+
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->title, read_data);
+
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->genre, read_data);
+
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->director->data, read_data);
+
+	fscanf(mv_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0){
+		read_num = atoi(read_data);
+		update->year = read_num;
+	}
+
+	fscanf(mv_l, "%*c%[^:]%*c", read_data);
+	if(strcmp(read_data, "=")!=0){
+		read_num = atoi(read_data);
+		update->time = read_num;
+	}
+
+	char *temp = (char*)calloc(300, sizeof(char));
+	fscanf(mv_l, "%[^\n]%*c", temp);
+	if(strcmp(temp, "=")!=0){
+		LINK_W *h = (LINK_W*)malloc(sizeof(LINK_W));
+		LINK_W *l = (LINK_W*)malloc(sizeof(LINK_W));
+		h = update->actor;
+		while(h->next != NULL){
+			LINK_W *d = (LINK_W*)malloc(sizeof(LINK_W));
+			d = h;
+			l = d->next;
+			free(d->data);
+			free(d);
+			h = l;
+		}
+		free(l->data);
+		free(l);
+		update->actor = (LINK_W *)malloc(sizeof(LINK_W));
+		h->data = strtok(temp, ",");
+		while(h->data != NULL){
+			char *check = (char*)malloc(sizeof(char)*30);
+			check = strtok(NULL, ",");
+			if(check == NULL){
+				h->next = NULL;
+				break;
+			}
+			else{
+				h->next = (LINK_W *)malloc(sizeof(LINK_W));
+				h = h->next;
+				h->next = NULL;
+				h->data = check;
+			}
+		}
+	}
+}
 int scan_movie_log(ALL_M *movie){
   LINK_M *save_movie;
   LINK_W *save_word,*last_word;
@@ -563,7 +896,7 @@ int scan_movie_log(ALL_M *movie){
       return 1;
       break;
     }
-  fscanf(mv_l,"%[^:]s",input_data);
+  fscanf(mv_l,"%[^:]u",input_data);
   if(strcmp(input_data,"add")==0){
     add_movie_list(movie,mv_l);
     movie -> size++;
@@ -573,6 +906,7 @@ int scan_movie_log(ALL_M *movie){
     break;
   }
   else if(strcmp(input_data,"update")==0){
+		update_movie_list(movie,mv_l);
     read_text=fgetc(mv_l);
     fseek(mv_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -589,7 +923,24 @@ int scan_movie_log(ALL_M *movie){
   else
   break;
 }
-return i;
+FILE *file;
+file = fopen("movie_list","w");
+LINK_W *print_word;
+LINK_M *print_movie;
+print_movie = movie -> head;
+print_word = (LINK_W *)malloc(sizeof(LINK_W));
+    while(print_movie -> next_movie != movie -> tail){
+      print_movie = print_movie -> next_movie;
+      fprintf(file,"%d:%s:%s:%s:%d:%d:",print_movie -> serial_num,print_movie -> title,print_movie -> genre,print_movie -> director -> data,print_movie -> year,print_movie -> time);
+      print_word = print_movie -> actor;
+      while(print_word -> next != NULL){
+        fprintf(file,"%s,",print_word->data);
+        print_word = print_word->next;
+      }
+      fprintf(file,"%s\n", print_word->data);
+    }
+      fclose(file);
+return 0;
 }
 
 int print_movie_list(ALL_M *movie,int serial){
@@ -657,19 +1008,22 @@ void input_multiple_act(LINK_A *actor){
 }
 void print_multiple_data_log_to_list_act(FILE *act_l, LINK_A *actor){
 	LINK_W *tmp;
+	char *checking_colon;
 	tmp = actor->title;
 	while(tmp->next != NULL){
-		fprintf(act_l,"%s,",tmp->data);
+		checking_colon = change(tmp->data,":","??;");
+		fprintf(act_l,"%s,",checking_colon);
 		tmp = tmp->next;
 	}
-	fprintf(act_l, "%s\n", tmp->data);
+	checking_colon = change(tmp->data,":","??;");
+	fprintf(act_l, "%s\n",checking_colon);
 }
 
 void add_actor(ALL_A *actor){
   FILE *act_l,*act_s;
   LINK_W *save_word,*check_word;
   LINK_A *save_actor,*new_actor,*check;
-  char *input_data, input_text,read_text,checking;
+  char *input_data, input_text,read_text,checking,*checking_colon;
   int input_num,i,serial = 1;
   save_actor = (LINK_A *)malloc(sizeof(LINK_A));
   check = actor -> head;
@@ -728,7 +1082,8 @@ void add_actor(ALL_A *actor){
   else{
     act_l=fopen("actor_log","a");
   fprintf(act_l,"add:%d:",save_actor -> serial_num);
-  fprintf(act_l,"%s:",save_actor ->name);
+	checking_colon = change(save_actor -> name, ":","??;");
+  fprintf(act_l,"%s:",checking_colon);
   fprintf(act_l,"%c:",save_actor ->sex);
   fprintf(act_l,"%8d:",save_actor -> birth);
   print_multiple_data_log_to_list_act(act_l,save_actor);
@@ -776,15 +1131,16 @@ int add_actor_list(ALL_A *actor,FILE *act_l){
   temp=(char*)calloc(1024, sizeof(char));
   fscanf(act_l,"%*c%d",&read_num);
   new_actor -> serial_num = read_num;
-  fscanf(act_l,"%*c%[^:]s",read_data);
+  fscanf(act_l,"%*c%[^:]",read_data);
   new_actor -> name = (char *)malloc(strlen(read_data));
-  strcpy(new_actor -> name, read_data);
+	new_actor -> name = change(read_data,"??;",":");
   fscanf(act_l,"%*c%c",&read_text);
   new_actor -> sex = read_text;
   fscanf(act_l,"%*c%d:",&read_num);
   new_actor -> birth = read_num;
   fscanf(act_l,"%[^\n]%*c",temp);
   tmp->data = strtok(temp, ",");
+	tmp -> data = change(tmp -> data,"??;",":");
 	while(tmp->data != NULL){
 		char *check;
 		check=(char*)malloc(sizeof(char)*30);
@@ -797,7 +1153,7 @@ int add_actor_list(ALL_A *actor,FILE *act_l){
 			tmp->next = (LINK_W *)malloc(sizeof(LINK_W));
 			tmp = tmp->next;
 			tmp->next=NULL;
-			tmp->data = check;
+			tmp->data = change(check,"??;",":");
 		}
 	}
   link_actor = actor -> head;
@@ -827,6 +1183,228 @@ int delete_actor_list(ALL_A *actor,FILE *act_l){
   }
   return 0;
 }
+void update_actor(ALL_A *actor, char *option, int serial){
+	FILE *act_l;
+	act_l = fopen("actor_log","a");
+	LINK_A *tmp = actor->head;
+	LINK_A *update,*checking;
+  int state;
+	while(tmp->next_actor != actor->tail){
+		tmp = tmp->next_actor;
+		if(tmp->serial_num == serial){
+			update = tmp;
+			break;
+		}
+	}
+	printf("%d\n",update -> serial_num);
+  checking = actor -> head;
+	int check = strlen(option);
+	char *check_option = (char*)calloc(4, sizeof(char));
+	char *revise = (char*)malloc(sizeof(char)*2);
+	char *str;
+	char c;
+	str = (char*)calloc(30, sizeof(char));
+	int num;
+	for(int i=0; i<check; i++){
+		if(*(option+i) == 'n') *(check_option+0) = 'n';
+		if(*(option+i) == 's') *(check_option+1) = 's';
+		if(*(option+i) == 'b') *(check_option+2) = 'b';
+		if(*(option+i) == 'm') *(check_option+3) = 'm';
+	}
+	fprintf(act_l, "update:%d:", serial);
+	if(*(check_option+0) == 'n'){
+		state = 0;
+	       printf("name > ");
+	       scanf("%[^\n]", str);
+	       getchar();
+         while(checking -> next_actor != actor -> tail){
+					 checking = checking -> next_actor;
+					 if((strcmp(str, checking->name))==0){
+						 printf("You have the same record.\n");
+						 printf("title : %s\n", checking->name);
+						 printf("Do you want to revise?(Y : yes, N: no)\n");
+						 scanf("%s%*c", revise);
+						 if((strcmp(revise, "Y") == 0)) fprintf(act_l, "%s:", checking->name);
+						 else if((strcmp(revise, "N")==0)) fprintf(act_l, "=:");
+						 state = 1;
+						 break;
+					 }
+				 }
+	       if(state != 1) fprintf(act_l, "%s:", str);
+	}
+	else if(*(check_option+0) == '\0') fprintf(act_l, "=:");
+	if(*(check_option+1) == 's'){
+		printf("sex > ");
+                scanf("%c", c);
+                if(c == update->sex){
+			printf("You have the same record.\n");
+                        printf("sex : %c\n", update->sex);
+                        printf("Do you want to revise?(Y : yes, N: no)\n");
+                        scanf("%s%*c", revise);
+                        if(strcmp(revise, "Y")==0) fprintf(act_l, "%c:", update->sex);
+			else if((strcmp(revise, "N")==0)) fprintf(act_l, "=:");
+		}
+                else fprintf(act_l, "%c:", c);
+	}
+	else if(*(check_option+1) == '\0') fprintf(act_l, "=:");
+	if(*(check_option+2) == 'b'){
+		printf("birth > ");
+                scanf("%d", &num);
+		char *snum = (char*)calloc(2, sizeof(char));
+		change_num_to_string(snum, num);
+                if(update->birth == num){
+			printf("You have the same record.\n");
+                        printf("birth : %d\n", update->birth);
+                        printf("Do you want to revise?(Y : yes, N: no)\n");
+                        scanf("%s", revise);
+												getchar();
+                        if(strcmp(revise, "Y")==0) fprintf(act_l, "%d:", update->birth);
+			else if((strcmp(revise, "N")==0)) fprintf(act_l, "=:");
+		}
+                else fprintf(act_l, "%d:", num);
+	}
+	else if(*(check_option+2) == '\0') fprintf(act_l, "=:");
+        if(*(check_option+3) == 'm'){
+	       printf("movies > ");
+
+	       LINK_A *ttmp = (LINK_A*)malloc(sizeof(LINK_A));
+	       input_multiple_act(ttmp);
+
+	       int a=1, b=1;
+	       LINK_W *new;
+	       new = ttmp->title;
+
+	       while(new ->next != NULL){
+		       a++;
+		      new = new->next;
+	       }
+	       new = ttmp->title;
+	       LINK_W *org;
+	       org = update->title;
+	       while(org->next != NULL){
+		       b++;
+		      org = org->next;
+	       }
+	       org = update->title;
+	       if(a != b){
+		       while(new->next != NULL){
+			       fprintf(act_l, "%s,", new->data);
+			       new = new->next;
+		       }
+		       fprintf(act_l, "%s\n", new->data);
+	       }
+	       else{
+		       char *gar1 = (char*)calloc(200, sizeof(char));
+		       char *gar2 = (char*)calloc(200, sizeof(char));
+		       while(new->next != NULL){
+			       strcpy(gar1+strlen(gar1), new->data);
+			       strcat(gar1, ",");
+			       new = new->next;
+		       }
+		       strcat(gar1, new->data);
+		       while(org->next != NULL){
+			       strcpy(gar2+strlen(gar2), org->data);
+			       strcat(gar2, ",");
+			       org = org->next;
+		       }
+		       strcat(gar2, org->data);
+		       new = ttmp->title;
+		       org = update->title;
+		       if(strcmp(gar1, gar2)==0){
+			       printf("You have the same records.\n");
+			       printf("movies : %s\n", gar1);
+			       printf("Do you want to revise?(Y : yes, N : no)\n");
+			       scanf("%s%*c", revise);
+			       if(strcmp(revise, "Y")==0){
+				       while(org->next != NULL){
+					       fprintf(act_l, "%s,", org->data);
+					       org = org->next;
+				       }
+				       fprintf(act_l, "%s\n", org->data);
+			       }
+			       else if(strcmp(revise, "N")==0) fprintf(act_l, "=\n");
+		       }
+		       else{
+			       while(new->next != NULL){
+				       fprintf(act_l, "%s,", new->data);
+				       new = new->next;
+			       }
+			       fprintf(act_l, "%s\n", new->data);
+		       }
+	       }
+
+	}
+	else if(*(check_option+3) == '\0') fprintf(act_l, "=\n");
+	fclose(act_l);
+}
+
+void update_actor_list(ALL_A *actor,FILE *act_l){
+	char *read_data = (char*)calloc(30, sizeof(char));
+	int read_num;
+	char read_one;
+	fscanf(act_l, "%*c%d", &read_num);
+
+	LINK_A *tmp = (LINK_A*)malloc(sizeof(LINK_A));
+	tmp = actor->head;
+	LINK_A *update = (LINK_A*)malloc(sizeof(LINK_A));
+	while(tmp->next_actor != actor->tail){
+		tmp = tmp->next_actor;
+		if(tmp->serial_num == read_num){
+			update = tmp;
+			break;
+		}
+	}
+	update->serial_num = read_num;
+
+	fscanf(act_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->name, read_data);
+
+	fscanf(act_l, "%*c%c", &read_one);
+	if(read_one != '=')
+		update->sex = read_one;
+
+	fscanf(act_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0){
+		read_num = atoi(read_data);
+		update->birth = read_num;
+	}
+
+	char *temp = (char*)calloc(300, sizeof(char));
+	fscanf(act_l, "%[^\n]%*c", temp);
+	if(strcmp(temp, "=")!=0){
+		LINK_W *h = (LINK_W*)malloc(sizeof(LINK_W));
+		LINK_W *l = (LINK_W*)malloc(sizeof(LINK_W));
+		h = update->title;
+		while(h->next != NULL){
+			LINK_W *d = (LINK_W*)malloc(sizeof(LINK_W));
+			d = h;
+			l = d->next;
+			free(d->data);
+			free(d);
+			h = l;
+		}
+		free(l->data);
+		free(l);
+		update->title = (LINK_W *)malloc(sizeof(LINK_W));
+		h->data = strtok(temp, ",");
+		while(h->data != NULL){
+			char *check = (char*)malloc(sizeof(char)*30);
+			check = strtok(NULL, ",");
+			if(check == NULL){
+				h->next = NULL;
+				break;
+			}
+			else{
+				h->next = (LINK_W *)malloc(sizeof(LINK_W));
+				h = h->next;
+				h->next = NULL;
+				h->data = check;
+			}
+		}
+	}
+}
+
 int scan_actor_log(ALL_A *actor){
   LINK_A *save_actor;
   LINK_W *save_word,*last_word;
@@ -841,7 +1419,7 @@ int scan_actor_log(ALL_A *actor){
       return 1;
       break;
     }
-  fscanf(act_l,"%[^:]s",input_data);
+  fscanf(act_l,"%[^:]",input_data);
   if(strcmp(input_data,"add")==0){
     add_actor_list(actor,act_l);
     actor -> size ++;
@@ -852,6 +1430,7 @@ int scan_actor_log(ALL_A *actor){
     break;
   }
   else if(strcmp(input_data,"update")==0){
+		update_actor_list(actor,act_l);
     read_text=fgetc(act_l);
     fseek(act_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -868,7 +1447,24 @@ int scan_actor_log(ALL_A *actor){
   else
   break;
 }
-return i;
+FILE *file;
+file = fopen("actor_list","w");
+LINK_W *print_word;
+LINK_A *print_actor;
+print_actor = actor -> head;
+print_word = (LINK_W *)malloc(sizeof(LINK_W));
+    while(print_actor -> next_actor != actor -> tail){
+      print_actor = print_actor -> next_actor;
+      fprintf(file,"%d:%s:%c:%d:",print_actor -> serial_num,print_actor -> name,print_actor -> sex,print_actor -> birth);
+      print_word = print_actor -> title;
+      while(print_word -> next != NULL){
+        fprintf(file,"%s,",print_word->data);
+        print_word = print_word->next;
+      }
+      fprintf(file,"%s\n", print_word->data);
+    }
+      fclose(file);
+return 0;
 }
 int print_actor_list(ALL_A *actor,int serial){
   LINK_A *print_actor;
@@ -897,9 +1493,10 @@ int print_actor_list(ALL_A *actor,int serial){
     printf("  M%d : %s(  -  )\n",i,print_word->data);
     else
     printf("  M%d : %s(%d,%d)\n",i,print_word->data,print_movie -> year,print_movie -> time);
-    return 1;
+    break;
   }
 }
+return 1;
 }
 void input_multiple_dir(LINK_D *director){
 	director -> title = (LINK_W *)malloc(sizeof(LINK_W));
@@ -927,21 +1524,24 @@ void input_multiple_dir(LINK_D *director){
 }
 void print_multiple_data_log_to_list_dir(FILE *dir_l, LINK_D *director){
 	LINK_W *tmp;
+	char *checking_colon;
 	tmp = director->title;
 	while(tmp->next != NULL){
-		fprintf(dir_l,"%s,",tmp->data);
+		checking_colon = change(tmp->data,":","??;");
+		fprintf(dir_l,"%s,",checking_colon);
 		tmp = tmp->next;
 	}
-	fprintf(dir_l, "%s\n", tmp->data);
+	checking_colon = change(tmp->data,":","??;");
+	fprintf(dir_l, "%s\n",checking_colon);
 }
 
 void add_director(ALL_D *director){
   FILE *dir_l,*dir_s;
   LINK_W *save_word,*check_word;
   LINK_D *save_director,*new_director,*check;
-  char *input_data, input_text,read_text,checking;
+  char *input_data, input_text,read_text,checking,*checking_colon;
   int input_num,i,serial = 1;
-  save_director = (LINK_D *)malloc(sizeof(LINK_A));
+  save_director = (LINK_D *)malloc(sizeof(LINK_D));
   check = director -> head;
   input_data=(char *)malloc(sizeof(char)*30);
   dir_s = fopen("director_log","r");
@@ -964,7 +1564,6 @@ void add_director(ALL_D *director){
   fclose(dir_s);
   }
   save_director -> serial_num = serial;
-
   printf("name >");
   scanf("%[^\n]%*c",input_data);
   save_director -> name = (char *)malloc(strlen(input_data)+1);
@@ -999,7 +1598,8 @@ void add_director(ALL_D *director){
   else{
     dir_l=fopen("director_log","a");
   fprintf(dir_l,"add:%d:",save_director -> serial_num);
-  fprintf(dir_l,"%s:",save_director ->name);
+	checking_colon = change(save_director -> name, ":","??;");
+  fprintf(dir_l,"%s:",checking_colon);
   fprintf(dir_l,"%c:",save_director ->sex);
   fprintf(dir_l,"%8d:",save_director -> birth);
   print_multiple_data_log_to_list_dir(dir_l,save_director);
@@ -1025,6 +1625,7 @@ int delete_director(ALL_D *director,int serial){
       dir_d = fopen("director_log","a");
       fprintf(dir_d,"delete:%d::::::\n", serial);
       fclose(dir_d);
+			free(pre_director -> title);
       free(pre_director);
       return 1;
       director -> size--;
@@ -1049,13 +1650,14 @@ int add_director_list(ALL_D *director,FILE *dir_l){
   new_director -> serial_num = read_num;
   fscanf(dir_l,"%*c%[^:]s",read_data);
   new_director -> name = (char *)malloc(strlen(read_data));
-  strcpy(new_director -> name, read_data);
+	new_director -> name = change(read_data,"??;",":");
   fscanf(dir_l,"%*c%c",&read_text);
   new_director -> sex = read_text;
   fscanf(dir_l,"%*c%d:",&read_num);
   new_director -> birth = read_num;
   fscanf(dir_l,"%[^\n]%*c",temp);
   tmp->data = strtok(temp, ",");
+	tmp -> data = change(tmp -> data,"??;",":");
 	while(tmp->data != NULL){
 		char *check;
 		check=(char*)malloc(sizeof(char)*30);
@@ -1068,7 +1670,7 @@ int add_director_list(ALL_D *director,FILE *dir_l){
 			tmp->next = (LINK_W *)malloc(sizeof(LINK_W));
 			tmp = tmp->next;
 			tmp->next=NULL;
-			tmp->data = check;
+			tmp->data = change(check,"??;",":");
 		}
 	}
   link_director = director -> head;
@@ -1080,6 +1682,7 @@ int add_director_list(ALL_D *director,FILE *dir_l){
   if(read_text=='\n')
   return 1;
 }
+
 int delete_director_list(ALL_D *director,FILE *dir_l){
   LINK_D *pre_director, *del_director;
   int read_num;
@@ -1098,6 +1701,224 @@ int delete_director_list(ALL_D *director,FILE *dir_l){
   }
   return 0;
 }
+void update_director(ALL_D *director, char *option, int serial){
+	FILE *dir_l;
+	dir_l = fopen("director_log","a");
+	LINK_D *tmp = director->head;
+	LINK_D *update;
+	while(tmp->next_director != director->tail){
+		tmp = tmp->next_director;
+		if(tmp->serial_num == serial){
+			update = tmp;
+			break;
+		}
+	}
+	printf("%d\n",update -> serial_num);
+	int check = strlen(option);
+	char *check_option = (char*)calloc(4, sizeof(char));
+	char *revise = (char*)malloc(sizeof(char)*2);
+	char *str;
+	char c;
+	str = (char*)calloc(30, sizeof(char));
+	int num;
+	for(int i=0; i<check; i++){
+		if(*(option+i) == 'n') *(check_option+0) = 'n';
+		if(*(option+i) == 's') *(check_option+1) = 's';
+		if(*(option+i) == 'b') *(check_option+2) = 'b';
+		if(*(option+i) == 'm') *(check_option+3) = 'm';
+	}
+	fprintf(dir_l, "update:%d:", serial);
+	if(*(check_option+0) == 'n'){
+	       printf("name > ");
+	       scanf("%[^\n]", str);
+	       getchar();
+	       if((strcmp(str, update->name))==0){
+		       printf("You have the same record.\n");
+		       printf("name : %s\n", update->name);
+		       printf("Do you want to revise?(Y : yes, N: no)\n");
+		       scanf("%s", revise);
+		       getchar();
+		       if((strcmp(revise, "Y") == 0)) fprintf(dir_l, "%s:", update->name);
+		       else if((strcmp(revise, "N")==0)) fprintf(dir_l, "=:");
+	       }
+	       else fprintf(dir_l, "%s:", str);
+	}
+	else if(*(check_option+0) == '\0') fprintf(dir_l, "=:");
+	if(*(check_option+1) == 's'){
+		printf("sex > ");
+                scanf("%c", c);
+                getchar();
+                if(c == update->sex){
+			printf("You have the same record.\n");
+                        printf("sex : %c\n", update->sex);
+                        printf("Do you want to revise?(Y : yes, N: no)\n");
+                        scanf("%s", revise);
+			getchar();
+                        if(strcmp(revise, "Y")==0) fprintf(dir_l, "%c:", update->sex);
+			else if((strcmp(revise, "N")==0)) fprintf(dir_l, "=:");
+		}
+                else fprintf(dir_l, "%c:", c);
+	}
+	else if(*(check_option+1) == '\0') fprintf(dir_l, "=:");
+	if(*(check_option+2) == 'b'){
+		printf("birth > ");
+                scanf("%d", &num);
+		char *snum = (char*)calloc(2, sizeof(char));
+		change_num_to_string(snum, num);
+                if(update->birth == num){
+			printf("You have the same record.\n");
+                        printf("birth : %d\n", update->birth);
+                        printf("Do you want to revise?(Y : yes, N: no)\n");
+                        scanf("%s", revise);
+			getchar();
+                        if(strcmp(revise, "Y")==0) fprintf(dir_l, "%d:", update->birth);
+			else if((strcmp(revise, "N")==0)) fprintf(dir_l, "=:");
+		}
+                else fprintf(dir_l, "%d:", num);
+	}
+	else if(*(check_option+2) == '\0') fprintf(dir_l, "=:");
+        if(*(check_option+5) == 'm'){
+	       printf("movies > ");
+
+	       LINK_D *ttmp = (LINK_D*)malloc(sizeof(LINK_D));
+	       input_multiple_dir(ttmp);
+
+	       int a=1, b=1;
+	       LINK_W *new;
+	       new = ttmp->title;
+
+	       while(new ->next != NULL){
+		       a++;
+		      new = new->next;
+	       }
+	       new = ttmp->title;
+	       LINK_W *org;
+	       org = update->title;
+	       while(org->next != NULL){
+		       b++;
+		      org = org->next;
+	       }
+	       org = update->title;
+	       if(a != b){
+		       while(new->next != NULL){
+			       fprintf(dir_l, "%s,", new->data);
+			       new = new->next;
+		       }
+		       fprintf(dir_l, "%s\n", new->data);
+	       }
+	       else{
+		       char *gar1 = (char*)calloc(200, sizeof(char));
+		       char *gar2 = (char*)calloc(200, sizeof(char));
+		       while(new->next != NULL){
+			       strcpy(gar1+strlen(gar1), new->data);
+			       strcat(gar1, ",");
+			       new = new->next;
+		       }
+		       strcat(gar1, new->data);
+		       while(org->next != NULL){
+			       strcpy(gar2+strlen(gar2), org->data);
+			       strcat(gar2, ",");
+			       org = org->next;
+		       }
+		       strcat(gar2, org->data);
+		       new = ttmp->title;
+		       org = update->title;
+		       if(strcmp(gar1, gar2)==0){
+			       printf("You have the same records.\n");
+			       printf("movies : %s\n", gar1);
+			       printf("Do you want to revise?(Y : yes, N : no)\n");
+			       scanf("%s", revise);
+			       getchar();
+			       if(strcmp(revise, "Y")==0){
+				       while(org->next != NULL){
+					       fprintf(dir_l, "%s,", org->data);
+					       org = org->next;
+				       }
+				       fprintf(dir_l, "%s\n", org->data);
+			       }
+			       else if(strcmp(revise, "N")==0) fprintf(dir_l, "=\n");
+		       }
+		       else{
+			       while(new->next != NULL){
+				       fprintf(dir_l, "%s,", new->data);
+				       new = new->next;
+			       }
+			       fprintf(dir_l, "%s\n", new->data);
+		       }
+	       }
+
+	}
+	else if(*(check_option+5) == '\0') fprintf(dir_l, "=\n");
+	fclose(dir_l);
+}
+
+void update_director_list(ALL_D *director,FILE *dir_l){
+	char *read_data = (char*)calloc(30, sizeof(char));
+	int read_num;
+	char read_one;
+	fscanf(dir_l, "%*c%d", &read_num);
+
+	LINK_D *tmp = (LINK_D*)malloc(sizeof(LINK_D));
+	tmp = director->head;
+	LINK_D *update = (LINK_D*)malloc(sizeof(LINK_D));
+	while(tmp->next_director != director->tail){
+		tmp = tmp->next_director;
+		if(tmp->serial_num == read_num){
+			update = tmp;
+			break;
+		}
+	}
+	update->serial_num = read_num;
+
+	fscanf(dir_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0)
+		strcpy(update->name, read_data);
+
+	fscanf(dir_l, "%*c%c", &read_one);
+	if(read_one != '=')
+		update->sex = read_one;
+
+	fscanf(dir_l, "%*c%[^:]", read_data);
+	if(strcmp(read_data, "=")!=0){
+		read_num = atoi(read_data);
+		update->birth = read_num;
+	}
+
+	char *temp = (char*)calloc(300, sizeof(char));
+	fscanf(dir_l, "%[^\n]%*c", temp);
+	if(strcmp(temp, "=")!=0){
+		LINK_W *h = (LINK_W*)malloc(sizeof(LINK_W));
+		LINK_W *l = (LINK_W*)malloc(sizeof(LINK_W));
+		h = update->title;
+		while(h->next != NULL){
+			LINK_W *d = (LINK_W*)malloc(sizeof(LINK_W));
+			d = h;
+			l = d->next;
+			free(d->data);
+			free(d);
+			h = l;
+		}
+		free(l->data);
+		free(l);
+		update->title = (LINK_W *)malloc(sizeof(LINK_W));
+		h->data = strtok(temp, ",");
+		while(h->data != NULL){
+			char *check = (char*)malloc(sizeof(char)*30);
+			check = strtok(NULL, ",");
+			if(check == NULL){
+				h->next = NULL;
+				break;
+			}
+			else{
+				h->next = (LINK_W *)malloc(sizeof(LINK_W));
+				h = h->next;
+				h->next = NULL;
+				h->data = check;
+			}
+		}
+	}
+}
+
 int scan_director_log(ALL_D *director){
   LINK_D *save_director;
   LINK_W *save_word,*last_word;
@@ -1112,7 +1933,7 @@ int scan_director_log(ALL_D *director){
       return 1;
       break;
     }
-  fscanf(dir_l,"%[^:]s",input_data);
+  fscanf(dir_l,"%[^:]",input_data);
   if(strcmp(input_data,"add")==0){
     add_director_list(director,dir_l);
       director -> size ++;
@@ -1122,6 +1943,7 @@ int scan_director_log(ALL_D *director){
     break;
   }
   else if(strcmp(input_data,"update")==0){
+		update_director_list(director,dir_l);
     read_text=fgetc(dir_l);
     fseek(dir_l,-1,SEEK_CUR);
     if(read_text==EOF)
@@ -1138,7 +1960,24 @@ int scan_director_log(ALL_D *director){
   else
   break;
 }
-return i;
+FILE *file;
+file = fopen("director_list","w");
+LINK_W *print_word;
+LINK_D *print_director;
+print_director = director -> head;
+print_word = (LINK_W *)malloc(sizeof(LINK_W));
+    while(print_director -> next_director != director -> tail){
+      print_director = print_director -> next_director;
+      fprintf(file,"%d:%s:%c:%d:",print_director -> serial_num,print_director -> name,print_director -> sex,print_director -> birth);
+      print_word = print_director -> title;
+      while(print_word -> next != NULL){
+        fprintf(file,"%s,",print_word->data);
+        print_word = print_word->next;
+      }
+      fprintf(file,"%s\n", print_word->data);
+    }
+      fclose(file);
+return 0;
 }
 int print_director_list(ALL_D *director,int serial){
   LINK_D *print_director;
@@ -2042,6 +2881,19 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   char *command,*input_data;//문자열을 입력받을 char형 포인터 배열을 선언하였음
   char input_text,option;//옵션을 받을 char형 변수를 선언함
   char checking;
+  FILE *check_movie,*check_actor,*check_director;
+  check_movie = fopen("movie_list","r");
+  check_actor = fopen("actor_list","r");
+  check_director = fopen("director_list","r");
+  if(check_movie != NULL)
+  copy_movie_list();
+  if(check_actor != NULL)
+  copy_actor_list();
+  if(check_director != NULL)
+  copy_director_list();
+  fclose(check_movie);
+  fclose(check_actor);
+  fclose(check_director);
   int input_num,i;
   scan_movie_log(movie);
   scan_actor_log(actor);
@@ -2059,6 +2911,15 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
     scanf("%*c%c%*c",&input_text);//'\n'을 무시하고 명령어를 입력받음
     if(input_text=='d'){//director에 내용을 추가함
       add_director(director);
+      free(movie);
+      free(director);
+      free(actor);
+      make_movie_admin(&movie);
+      make_actor_admin(&actor);
+      make_director_admin(&director);
+      scan_movie_log(movie);
+      scan_actor_log(actor);
+      scan_director_log(director);
       compare_movie_word(movie,director,actor);
       compare_actor_word(movie,actor);
       compare_director_word(movie,director);
@@ -2066,6 +2927,15 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   }
     else if(input_text=='m'){//movie에 내용을 추가함
       add_movie(movie);
+      free(movie);
+      free(director);
+      free(actor);
+      make_movie_admin(&movie);
+      make_actor_admin(&actor);
+      make_director_admin(&director);
+      scan_movie_log(movie);
+      scan_actor_log(actor);
+      scan_director_log(director);
       compare_movie_word(movie,director,actor);
       compare_actor_word(movie,actor);
       compare_director_word(movie,director);
@@ -2073,22 +2943,61 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   }
     else if(input_text=='a'){//actor에 내용을 추가함
       add_actor(actor);
+      free(movie);
+      free(director);
+      free(actor);
+      make_movie_admin(&movie);
+      make_actor_admin(&actor);
+      make_director_admin(&director);
+      scan_movie_log(movie);
+      scan_actor_log(actor);
+      scan_director_log(director);
       compare_movie_word(movie,director,actor);
       compare_actor_word(movie,actor);
       compare_director_word(movie,director);
     printf("@@done\n");
   }
-    }
+}
   else if(strcmp(command,"update")==0){//파일을 업데이트함
     scanf("%*c%c",&input_text);
     if(input_text=='m'){
-      scanf("%*c%s%*c%d",&input_data,&input_num);//input_num을 시리얼 넘버로 선언해 주어야 함
-    }
+      getchar();
+			scanf("%s%*c",input_data);
+			scanf("%d%*c",&input_num);
+			printf("%d\n",input_num);
+			update_movie(movie,input_data,input_num);
+			free(movie);
+			make_movie_admin(&movie);
+			scan_movie_log(movie);
+			compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
+	  }
     else if(input_text=='a'){
-      scanf("%*c%s%d",&input_data,&input_num);//input_num을 시리얼 넘버로 선언해 주어야 함
+			getchar();
+			scanf("%s%*c",input_data);
+			scanf("%d%*c",&input_num);
+			printf("%d\n",input_num);
+			update_actor(actor,input_data,input_num);
+			free(actor);
+			make_actor_admin(&actor);
+			scan_actor_log(actor);
+			compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
     }
     else if(input_text='d'){
-      scanf("%*c%s%d",&input_data,&input_num);//input_num을 시리얼 넘버로 선언해 주어야 함
+			getchar();
+			scanf("%s%*c",input_data);
+			scanf("%d%*c",&input_num);
+			printf("%d\n",input_num);
+			update_director(director,input_data,input_num);
+			free(director);
+			make_director_admin(&director);
+			scan_director_log(director);
+			compare_movie_word(movie,director,actor);
+      compare_actor_word(movie,actor);
+      compare_director_word(movie,director);
     }
   }
   else if(strcmp(command,"delete")==0){//파일에서 내용을 지워줌
@@ -2155,7 +3064,6 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
       compare_movie_word(movie,director,actor);
       compare_actor_word(movie,actor);
       compare_director_word(movie,director);
-      printf("%c",checking);
     }
     }
   }
@@ -2203,10 +3111,19 @@ void commands(ALL_D *director,ALL_A *actor,ALL_M *movie){
   }
   else if(strcmp(command,"end")==0){//프로그램의 실행을 멈춘다
     //파일의 내용을 저장할 필요가 있으면 저장도 해주면 좋다
-    char tag;
-    tag = 'm';
-    save(movie,actor,director,tag);
-    break;
+    copy_movie_list();
+    copy_actor_list();
+    copy_director_list();
+    free(movie);
+    free(actor);
+    free(director);
+    make_movie_admin(&movie);
+    make_actor_admin(&actor);
+    make_director_admin(&director);
+    scan_movie_log(movie);
+    scan_actor_log(actor);
+    scan_director_log(director);
+    exit(1);
   }
   }
 }
@@ -2238,7 +3155,7 @@ int copy_movie_list(){
   h = t -> tm_hour;
   m2 = t -> tm_min;
   s = t -> tm_sec;
-  sprintf(filename, "movie_list%d%d%d%d%d%d", t -> tm_year+1900, t -> tm_mon, t -> tm_mday, t -> tm_hour, t -> tm_min, t -> tm_sec);
+  sprintf(filename, "movie_list.%d%d%d%d%d", t -> tm_year+1900, t -> tm_mon+1,t -> tm_hour, t -> tm_min, t -> tm_sec);
   //파일열기
   f2 = fopen(filename, "w");
 
@@ -2272,7 +3189,7 @@ int copy_movie_list(){
     h = t -> tm_hour;
     m2 = t -> tm_min;
     s = t -> tm_sec;
-    sprintf(filename, "actor_list%d%d%d%d%d%d", t -> tm_year+1900, t -> tm_mon, t -> tm_mday, t -> tm_hour, t -> tm_min, t -> tm_sec);
+    sprintf(filename, "actor_list.%d%d%d%d%d", t -> tm_year+1900, t -> tm_mon+1, t -> tm_hour, t -> tm_min, t -> tm_sec);
     //파일열기
     f2 = fopen(filename, "w");
 
@@ -2306,7 +3223,7 @@ int copy_movie_list(){
       h = t -> tm_hour;
       m2 = t -> tm_min;
       s = t -> tm_sec;
-      sprintf(filename, "director_list%d%d%d%d%d%d", t -> tm_year+1900, t -> tm_mon, t -> tm_mday, t -> tm_hour, t -> tm_min, t -> tm_sec);
+      sprintf(filename, "director_list.%d%d%d%d%d", t -> tm_year+1900, t -> tm_mon+1, t -> tm_hour, t -> tm_min, t -> tm_sec);
       //파일열기
       f2 = fopen(filename, "w");
 
@@ -2355,7 +3272,7 @@ int copy_movie_list(){
         }
               com_actor = actor -> head;
               while(com_word -> next != NULL){
-          last_word = com_word -> next;
+          last = com_word -> next;
           com_actor = actor -> head;
           while(com_actor -> next_actor != actor -> tail){
             com_actor = com_actor -> next_actor;
@@ -2388,15 +3305,16 @@ int copy_movie_list(){
         }
         com_movie = movie -> head;
         while(com_word -> next != NULL){
-          last_word = com_word -> next;
+          last = com_word -> next;
           com_movie = movie -> head;
           while(com_movie -> next_movie != movie -> tail){
             com_movie = com_movie -> next_movie;
+            last = com_word -> next;
             if(strcmp(com_word -> data,com_movie -> title)==0){
               com_word -> com_word = com_movie;
             }
-            else if(strcmp(last_word -> data,com_movie -> title)==0){
-              last_word -> com_word = com_movie;
+            else if(strcmp(last -> data,com_movie -> title)==0){
+              last -> com_word = com_movie;
             }
           }
           com_word = com_word -> next;
@@ -2424,6 +3342,7 @@ int copy_movie_list(){
           com_movie = movie -> head;
           while(com_movie -> next_movie != movie -> tail){
             com_movie = com_movie -> next_movie;
+						last = com_word -> next;
             if(strcmp(com_word -> data,com_movie -> title)==0){
               com_word -> com_word = com_movie;
             }
