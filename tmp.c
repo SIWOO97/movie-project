@@ -495,96 +495,96 @@ void add_movie(ALL_M *movie){//무비형 구조체의 내용을 추가하기 위
   fclose(mv_l);
 }
 }
-void change_num_to_string(char* str, int num){
-	int cnt=1;
+void change_num_to_string(char* str, int num){ // 숫자를 문자열로 변환하는 함수
+	int cnt=1; // 자릿수를 세는 변수
         int check = num;
-        while(check != check%10){
+        while(check != check%10){ // 자릿수 세기
                 cnt++;
                 check = check/10;
         }
-        for(int i=0; i<cnt; i++){
+        for(int i=0; i<cnt; i++){ // 10으로 나눈 나머지가 각 자리의 숫자이므로 그 결과를 res에 저장
                 int div=1;
                 for(int j=0; j<cnt-i-1; j++)
                         div *= 10;
                 int res = num/div;
-                char input = res+48;
+                char input = res+48; // 문자열로 변환해서 저장
                 *(str+i) = input;
                 num -= res*div;
         }
 }
-int update_movie(ALL_M *movie, char *option, int serial){
+int update_movie(ALL_M *movie, char *option, int serial){ // movie에 관한 내용을 업데이트하여 movie_ log를 작성하는 함수
 	FILE *mv_l;
-	mv_l = fopen("movie_log","a");
+	mv_l = fopen("movie_log","a"); // movie_log파일을 열음
 	LINK_M *tmp = movie->head;
-	int state;
-	LINK_M *update;
-	while(tmp->next_movie != movie->tail){
+	int state; // title 중복 데이터 체크를 위한 변수
+	LINK_M *update; // 입력받은 시리얼넘버에 해당하는 구조체
+	while(tmp->next_movie != movie->tail){ // 입력받은 시리얼넘버와 같은 시리얼넘버를 가지고 있는 구조체를 찾음
 		tmp = tmp->next_movie;
 		if(tmp->serial_num == serial){
-			update = tmp;
+			update = tmp; // update가 찾은 구조체를 포인트
 			break;
 		}
 	}
-	if(tmp->next_movie == movie->tail){
-                printf("There is no data.\n");
+	if(tmp->next_movie == movie->tail){ // 입력받은 시리얼넘버를 가진 구조체가 없을 경우(예를 들어,delete로 삭제한 후 update로 다시 접근했을 때)
+                printf("There is no data.\n"); 
                 printf("You can`t update.\n");
                 return 1;
         }
 
-	int check = strlen(option);
-	char *check_option = (char*)calloc(6, sizeof(char));
-	char *revise = (char*)malloc(sizeof(char)*2);
+	int check = strlen(option); // 옵션의 개수 저장 
+	char *check_option = (char*)calloc(6, sizeof(char)); // check_option 방에 입력받은 옵션을 넣어줌
+	char *revise = (char*)malloc(sizeof(char)*2); // 이미 같은 내용의 데이터가 있을 때 수정여부를 물을 변수
 	int num;
-	char *str =(char*)calloc(300, sizeof(char));
-	for(int i=0; i<check; i++){
-		if(*(option+i) == 't') *(check_option+0) = 't';
+	char* str = (char*)calloc(30, sizeof(char));
+	for(int i=0; i<check; i++){ // 입력받지 않은 옵션의 방에는 \0문자가 있음 (callco()으로 동적할당)
+		if(*(option+i) == 't') *(check_option+0) = 't'; // 옵션을 순서대로 입력하지 않아도 tgdyra 순서대로 출력
 		if(*(option+i) == 'g') *(check_option+1) = 'g';
 		if(*(option+i) == 'd') *(check_option+2) = 'd';
 		if(*(option+i) == 'y') *(check_option+3) = 'y';
 		if(*(option+i) == 'r') *(check_option+4) = 'r';
 		if(*(option+i) == 'a') *(check_option+5) = 'a';
 	}
-	fprintf(mv_l, "update:%d:", serial);
-	if(*(check_option+0) == 't'){
-		state = 0;
+	fprintf(mv_l, "update:%d:", serial); // movie_log에 작석 시작
+	if(*(check_option+0) == 't'){ // 옵션 t를 입력 받을 경우
+		state = 0; // state=0 이면 중복되는 데이터가 없음
 		printf("title > ");
 		scanf("%[^\n]", str);
 		getchar();
-		LINK_M *checking = (LINK_M*)malloc(sizeof(LINK_M));
+		LINK_M *checking = (LINK_M*)malloc(sizeof(LINK_M)); // linked list 형태로 저장된 모든 데이터를 도는 포인터
 		checking = tmp;
 		while(checking -> next_movie != movie -> tail){
 			checking = checking -> next_movie;
-			if((strcmp(str, checking->title))==0){
+			if((strcmp(str, checking->title))==0){ // 입력받은 문자열과 기존에 저장되어있던 데이터가 같으면 수정여부를 물음
 				printf("You have the same record.\n");
 				printf("title : %s\n", checking->title);
 				printf("Do you want to revise?(Y : yes, N: no)\n");
 				scanf("%s", revise);
 				getchar();
-				if((strcmp(revise, "Y") == 0)) fprintf(mv_l, "%s:", checking->title);
-				else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
-				state = 1;
+				if((strcmp(revise, "Y") == 0)) fprintf(mv_l, "%s:", checking->title); // yes이면 movie_log 파일에 문자열을 찍어줌
+				else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:"); // no이면 = 를 찍어줌
+				state = 1; // 중복데이터가 있었으므로 state=1
 				break;
 			}
 		}
-		if(state != 1) fprintf(mv_l, "%s:", str);
+		if(state != 1) fprintf(mv_l, "%s:", str); // 중복 데이터가 없으면 새로 입력받은 문자열을 찍음
 	}
-	else if(*(check_option+0) == '\0') fprintf(mv_l, "=:");
-	if(*(check_option+1) == 'g'){
+	else if(*(check_option+0) == '\0') fprintf(mv_l, "=:"); // 옵션 t를 입력받지 않았을 경우
+	if(*(check_option+1) == 'g'){ // 옵션 g를 입력받았을 경우
 		printf("genre > ");
                 scanf("%[^\n]", str);
                 getchar();
-		if((strcmp(str, update->title))==0){
+		if((strcmp(str, update->title))==0){ // 입력받은 문자열과 기존에 저장되어있던 데이터가 같으면
 			printf("You have the same record.\n");
 		 	printf("title : %s\n", update->title);
-		 	printf("Do you want to revise?(Y : yes, N: no)\n");
+		 	printf("Do you want to revise?(Y : yes, N: no)\n"); // 수정여부를 물음
 		 	scanf("%s", revise);
 		 	getchar();
 		 	if((strcmp(revise, "Y") == 0)) fprintf(mv_l, "%s:", update->title);
 		 	else if((strcmp(revise, "N")==0)) fprintf(mv_l, "=:");
 		}
 	}
-	else if(*(check_option+1) == '\0') fprintf(mv_l, "=:");
-	if(*(check_option+2) == 'd'){
+	else if(*(check_option+1) == '\0') fprintf(mv_l, "=:"); // 옵션 g를 입력받지 않았을 경우
+	if(*(check_option+2) == 'd'){ // 옵션 d를 입력받았을 경우
 		printf("director > ");
                 scanf("%[^\n]", str);
                 getchar();
@@ -599,12 +599,12 @@ int update_movie(ALL_M *movie, char *option, int serial){
 		}
                 else fprintf(mv_l, "%s:", str);
 	}
-	else if(*(check_option+2) == '\0') fprintf(mv_l, "=:");
-	if(*(check_option+3) == 'y'){
+	else if(*(check_option+2) == '\0') fprintf(mv_l, "=:"); // 옵션 d를 입력받지 않았을 경우
+	if(*(check_option+3) == 'y'){ // 옵션 y를 입력받았을 경우
 		printf("year > ");
                 scanf("%d", &num);
-		char *snum = (char*)calloc(2, sizeof(char));
-		change_num_to_string(snum, num);
+		char *snum = (char*)calloc(2, sizeof(char)); // 숫자를 문자열로 바꿔 저장할 메모리 할당
+		change_num_to_string(snum, num); // 숫자를 문자열로 바꾸는 함수
                 if(update->year == num){
 			printf("You have the same record.\n");
                         printf("year : %d\n", update->year);
@@ -616,8 +616,8 @@ int update_movie(ALL_M *movie, char *option, int serial){
 		}
                 else fprintf(mv_l, "%d:", num);
 	}
-	else if(*(check_option+3) == '\0') fprintf(mv_l, "=:");
-	if(*(check_option+4) == 'r'){
+	else if(*(check_option+3) == '\0') fprintf(mv_l, "=:"); // 옵션 y를 입력받지 않았을 경우
+	if(*(check_option+4) == 'r'){ // 옵션 r를 입력받았을 경우
 		printf("running time > ");
                 scanf("%d", &num);
 		char *snum = (char*)calloc(2, sizeof(char));
@@ -633,14 +633,14 @@ int update_movie(ALL_M *movie, char *option, int serial){
 		}
                 else fprintf(mv_l, "%d:", num);
 	}
-	else if(*(check_option+4) == '\0') fprintf(mv_l, "=:");
-        if(*(check_option+5) == 'a'){
+	else if(*(check_option+4) == '\0') fprintf(mv_l, "=:"); // 옵션 r을 입력받지 않았을 경우
+        if(*(check_option+5) == 'a'){ // 옵션 a를 입력받았을 경우
 	       printf("actor > ");
 
-	       LINK_M *ttmp = (LINK_M*)malloc(sizeof(LINK_M));
-	       input_multiple(ttmp);
+	       LINK_M *ttmp = (LINK_M*)malloc(sizeof(LINK_M)); // 입력받은 데이터를 ttmp에 임시로 저장
+	       input_multiple(ttmp); // linked list 형태의 데이터를 저장하는 함수
 
-	       int a=1, b=1;
+	       int a=1, b=1; // a는 새로 입력받은 데이터의 개수를 세는 변수, b는 기존에 있었던 데이터의 개수를 세는 변수
 	       LINK_W *new;
 	       new = ttmp->actor;
 
@@ -656,16 +656,16 @@ int update_movie(ALL_M *movie, char *option, int serial){
 		      org = org->next;
 	       }
 	       org = update->actor;
-	       if(a != b){
+	       if(a != b){ // 기존데이터의 개수와 새로운데이터의 개수가 같지 않으면 
 		       while(new->next != NULL){
-			       fprintf(mv_l, "%s,", new->data);
+			       fprintf(mv_l, "%s,", new->data); // movie_log에 찍음
 			       new = new->next;
 		       }
 		       fprintf(mv_l, "%s\n", new->data);
 	       }
-	       else{
-		       char *gar1 = (char*)calloc(200, sizeof(char));
-		       char *gar2 = (char*)calloc(200, sizeof(char));
+	       else{ // 기존데이터 개수와 새로운데이터 개수가 같으면 내용이 같을 수도 다를 수도 있음
+		       char *gar1 = (char*)calloc(200, sizeof(char)); // 새로운 데이터들을 , 와 함께  저장
+		       char *gar2 = (char*)calloc(200, sizeof(char));// 기존의 데이터를을 , 와 함께 저장
 		       while(new->next != NULL){
 			       strcpy(gar1+strlen(gar1), new->data);
 			       strcat(gar1, ",");
@@ -680,10 +680,10 @@ int update_movie(ALL_M *movie, char *option, int serial){
 		       strcat(gar2, org->data);
 		       new = ttmp->actor;
 		       org = update->actor;
-		       if(strcmp(gar1, gar2)==0){
+		       if(strcmp(gar1, gar2)==0){ // 새로운 데이터와 기존의 데이터의 내용이 모두 같으면
 			       printf("You have the same records.\n");
 			       printf("actors : %s\n", gar1);
-			       printf("Do you want to revise?(Y : yes, N : no)\n");
+			       printf("Do you want to revise?(Y : yes, N : no)\n"); // 수정여부를 물음
 			       scanf("%s", revise);
 			       getchar();
 			       if(strcmp(revise, "Y")==0){
@@ -695,9 +695,9 @@ int update_movie(ALL_M *movie, char *option, int serial){
 			       }
 			       else if(strcmp(revise, "N")==0) fprintf(mv_l, "=\n");
 		       }
-		       else{
+		       else{ // 새로운 데이터와 기존의 데이터의 내용이 같지 않으면
 			       while(new->next != NULL){
-				       fprintf(mv_l, "%s,", new->data);
+				       fprintf(mv_l, "%s,", new->data); // 새로운 데이터들을 movie_log에 찍어줌
 				       new = new->next;
 			       }
 			       fprintf(mv_l, "%s\n", new->data);
@@ -705,11 +705,10 @@ int update_movie(ALL_M *movie, char *option, int serial){
 	       }
 
 	}
-	else if(*(check_option+5) == '\0') fprintf(mv_l, "=\n");
-	fclose(mv_l);
+	else if(*(check_option+5) == '\0') fprintf(mv_l, "=\n"); // 옵션 a를 받지 않았을 경우
+	fclose(mv_l); // movie_log파일을 닫아서 작성한 내용을 저장
 	return 0;
 }
-
 int delete_movie(ALL_M *movie,int serial){
   LINK_M *pre_movie, *del_movie;
   FILE *mv_d;
@@ -784,65 +783,65 @@ int add_movie_list(ALL_M *movie,FILE *mv_l){
   new_movie -> next_movie = movie -> tail;
   free(read_data);
 }
-void update_movie_list(ALL_M *movie,FILE *mv_l){
-	char *read_data = (char*)calloc(30, sizeof(char));
+void update_movie_list(ALL_M *movie,FILE *mv_l){ // movie_log를 읽어 실제 저장된 데이터를 업데이트 해주는 함수
+	char *read_data = (char*)calloc(30, sizeof(char)); 
 	int read_num;
-	fscanf(mv_l, "%*c%d", &read_num);
+	fscanf(mv_l, "%*c%d", &read_num); // movie_log파일에서 시리얼넘버를 읽어옴
 
 	LINK_M *tmp = (LINK_M*)malloc(sizeof(LINK_M));
 	tmp = movie->head;
 	LINK_M *update = (LINK_M*)malloc(sizeof(LINK_M));
-	while(tmp->next_movie != movie->tail){
+	while(tmp->next_movie != movie->tail){ // 읽어온 시리얼 넘버와 같은 시리얼 넘버를 가진 구조체를 찾음
 		tmp = tmp->next_movie;
 		if(tmp->serial_num == read_num){
-			update = tmp;
+			update = tmp; // update가 찾은 구조체를 포인트 하게함
 			break;
 		}
 	}
 	update->serial_num = read_num;
 
-	fscanf(mv_l, "%*c%[^:]", read_data);
-	if(strcmp(read_data, "=")!=0)
-		strcpy(update->title, read_data);
+	fscanf(mv_l, "%*c%[^:]", read_data); // title을 읽어옴
+	if(strcmp(read_data, "=")!=0) // 읽어온 데이터가 = 가 아니면 (수정사항이 있으면)
+		strcpy(update->title, read_data); // 수정
 
-	fscanf(mv_l, "%*c%[^:]", read_data);
+	fscanf(mv_l, "%*c%[^:]", read_data); // genre을 읽어옴
 	if(strcmp(read_data, "=")!=0)
 		strcpy(update->genre, read_data);
-
-	fscanf(mv_l, "%*c%[^:]", read_data);
+  
+	fscanf(mv_l, "%*c%[^:]", read_data); // director을 읽어옴
 	if(strcmp(read_data, "=")!=0)
 		strcpy(update->director->data, read_data);
 
-	fscanf(mv_l, "%*c%[^:]", read_data);
+	fscanf(mv_l, "%*c%[^:]", read_data); // year을 읽어옴
 	if(strcmp(read_data, "=")!=0){
-		read_num = atoi(read_data);
+		read_num = atoi(read_data); // 읽어온 데이터는 문자열이므로 숫자로 변환해줌
 		update->year = read_num;
 	}
 
-	fscanf(mv_l, "%*c%[^:]%*c", read_data);
+	fscanf(mv_l, "%*c%[^:]%*c", read_data); // time을 읽어옴
 	if(strcmp(read_data, "=")!=0){
 		read_num = atoi(read_data);
 		update->time = read_num;
 	}
 
 	char *temp = (char*)calloc(300, sizeof(char));
-	fscanf(mv_l, "%[^\n]%*c", temp);
+	fscanf(mv_l, "%[^\n]%*c", temp); // actor을 전체 다 읽어옴(, 포함)
 	if(strcmp(temp, "=")!=0){
-		LINK_W *h = (LINK_W*)malloc(sizeof(LINK_W));
+		LINK_W *h = (LINK_W*)malloc(sizeof(LINK_W)); 
 		LINK_W *l = (LINK_W*)malloc(sizeof(LINK_W));
-		h = update->actor;
-		while(h->next != NULL){
+		h = update->actor; // 
+		while(h->next != NULL){ //기존에 저장되어있던 데이터를 지워주는 작업
 			LINK_W *d = (LINK_W*)malloc(sizeof(LINK_W));
-			d = h;
+			d = h; // 앞에서부터 하나씩 메모리 반납
 			l = d->next;
 			free(d->data);
 			free(d);
-			h = l;
+			h = l; // 메모리를 반납함으로써 떨어진 linked list 를 이어줌
 		}
-		free(l->data);
+		free(l->data); // 마지막 남은 메모리 반납
 		free(l);
-		update->actor = (LINK_W *)malloc(sizeof(LINK_W));
-		h->data = strtok(temp, ",");
+		update->actor = (LINK_W *)malloc(sizeof(LINK_W)); // 새로운 linked list를 할당받음
+		h->data = strtok(temp, ","); // , 를 기준으로 토큰을 나눠서 저장
 		while(h->data != NULL){
 			char *check = (char*)malloc(sizeof(char)*30);
 			check = strtok(NULL, ",");
